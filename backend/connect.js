@@ -11,7 +11,20 @@ const client = new MongoClient(process.env.ATLAS_URI, {
   }
 });
 
-async function run() {
+let database;
+
+
+module.exports = {
+  connectToServer: () => {
+    database = client.db("BlogData")
+  },
+  getDb: () => {
+    return database;
+  }
+}
+
+
+/*async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
@@ -23,4 +36,6 @@ async function run() {
     await client.close();
   }
 }
-run().catch(console.dir);
+run().catch(console.dir);*/
+
+console.log("MongoDB connected successfully");
