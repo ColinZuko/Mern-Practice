@@ -24,6 +24,3 @@ module.exports = {
 }
 
 
-
-
-console.log("MongoDB connected successfully");
