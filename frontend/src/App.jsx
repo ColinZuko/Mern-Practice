@@ -1,14 +1,14 @@
 import {HashRouter as Router, Route, Routes} from 'react-router-dom'
 import './App.css'
-import {About} from '../pages/About.jsx'
-import {Contact} from '../pages/Contact.jsx'
-import {Landing} from '../pages/Landing.jsx'
-import {Home} from '../pages/Home.jsx'
-import {ReadBlog} from '../pages/ReadBlog.jsx'
-import {CreateBlog} from '../pages/CreateBlog.jsx'
-import {Profile} from '../pages/Profile.jsx'
-import { Navbar } from '../components/Navbar.jsx'
-import { Layout } from '../components/Layout.jsx'
+import {About} from './pages/About'
+import {Contact} from './pages/Contact'
+import {Landing} from './pages/Landing'
+import {Home} from './pages/Home'
+import {ReadBlog} from './pages/ReadBlog'
+import {CreateBlog} from './pages/CreateBlog'
+import {Profile} from './pages/Profile'
+import { Navbar } from './components/Navbar'
+import { Layout } from './components/Layout'
 
 
 
@@ -20,8 +20,7 @@ function App() {
   //Landing page
   //Home Page(filtered by recency)
   //Read blog
-  //Create blog
-  //profile
+  //Create blogcd
   //About
   //Contact
 
