@@ -8,19 +8,19 @@ export function Home() {
     useEffect(() => {
         async function loadAllPosts() {
             const data = await getPosts();
+            data.sort((a, b) => new Date(b.dateCreated) - new Date(a.dateCreated))
             setPosts(data)
         }
         loadAllPosts()
     }, [])
 
     return (
-        <>
+        <div className='posts'>
             {posts.map((post) => {                
                 return(
                     <BlogCard post={post} />
                 )
             })}
-        </>
+        </div>
     )
 }
-//ended on the blog card chapter
