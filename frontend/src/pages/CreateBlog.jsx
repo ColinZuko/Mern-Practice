@@ -36,4 +36,3 @@ export function CreateBlog() {
     )
 }
 
-//Stopped on the create blog chapter 

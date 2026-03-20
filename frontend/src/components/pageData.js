@@ -14,7 +14,7 @@ export const pageData = [
     },
 
           {
-        name: "About Us",
+        name: "About Me",
         path: "/about"
     },
 
