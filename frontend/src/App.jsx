@@ -9,20 +9,20 @@ import {CreateBlog} from './pages/CreateBlog'
 import {Profile} from './pages/Profile'
 import { Navbar } from './components/Navbar'
 import { Layout } from './components/Layout'
+import { use, useEffect } from 'react'
+import axios from 'axios'
 
 
 
 function App() {
 
-  //Pages
-
-
-  //Landing page
-  //Home Page(filtered by recency)
-  //Read blog
-  //Create blogcd
-  //About
-  //Contact
+  useEffect(() => {
+    let token = sessionStorage.getItem("User");
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+  }, [])
+  
 
 
 

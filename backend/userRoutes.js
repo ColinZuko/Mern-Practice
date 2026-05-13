@@ -88,7 +88,8 @@ userRoutes.route("/users/login").post(async (request, response) => {
     if (user) {
         let confirmation = await bcrypt.compare(request.body.password, user.password);
         if (confirmation) {
-            const token = jwt.sign( user , process.env.SECRETKEY, { expiresIn: '1h' });
+                // Only sign the fields you need, keeping the password hash out of the token
+                const token = jwt.sign( { _id: user._id, email: user.email } , process.env.SECRETKEY, { expiresIn: '1h' });
             response.json({ success: true, token });
         }else { 
             response.json({ success: false, message: "Incorrect password" });
@@ -100,4 +101,3 @@ userRoutes.route("/users/login").post(async (request, response) => {
 });
 
 module.exports = userRoutes;
-

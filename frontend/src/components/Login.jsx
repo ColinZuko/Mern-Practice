@@ -1,6 +1,7 @@
 import { verifyUser } from "../api"
 import { useState } from "react";
 import {Navigate, useNavigate} from "react-router-dom";
+import axios from "axios";
 
 export function Login() {
     const [user, setUser] = useState({
@@ -21,6 +22,7 @@ export function Login() {
         if (response) {
             navigate("/home");
             sessionStorage.setItem("User", response);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${response}`;
         } else {
             alert("Login failed");
         }
@@ -36,4 +38,3 @@ export function Login() {
 }
 
 
-//finished on authentication token chapter, next is the asxios one

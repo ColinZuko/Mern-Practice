@@ -14,6 +14,12 @@ export function Navbar() {
                     </Link>
                 )
             })}
+            <button onClick={() => {
+                sessionStorage.removeItem("User");
+                window.location.reload();
+            }}>
+                Log Out
+            </button>
         </div>
     )
 

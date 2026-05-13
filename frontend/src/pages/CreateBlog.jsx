@@ -21,18 +21,20 @@ export function CreateBlog() {
 
         await createPost(submitObject)
 
+        setTitle('')
+        setDescription('')
+        setContent('')
     }
 
     return (
         <form onSubmit={handlesubmit}>
             <label>Blog Post Title: </label>
-            <input onChange={(e) => setTitle(e.target.value)} maxLength={100} required name="title" placeholder="Title" />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required name="title" placeholder="Title" />
             <label>Blog Description: </label>
-            <input onChange={(e) => setDescription(e.target.value)} maxLength={200} required name="description" placeholder="Description" />
+            <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} required name="description" placeholder="Description" />
             <label>Blog Content: </label>
-            <textarea onChange={(e) => setContent(e.target.value)} maxLength={5000} required name="content" placeholder="Content" />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={5000} required name="content" placeholder="Content" />
             <button type="submit">Submit</button>
         </form>
     )
 }
-
