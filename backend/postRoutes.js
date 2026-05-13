@@ -36,9 +36,8 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
             title: request.body.title,
             description: request.body.description,
             content: request.body.content,
-            // Convert the stringified ID from the JWT back into a MongoDB ObjectId
-            author: new ObjectId(request.user._id),
-            dateCreated: request.body.dateCreated
+            dateCreated: request.body.dateCreated,
+            imageId: request.body.imageId,
         }; 
         let data = await db.collection("posts").insertOne(mongoObject);
         response.json(data);
@@ -57,7 +56,8 @@ postRoutes.route("/posts/:id").put(verifyToken, async (request, response) => {
             description: request.body.description,
             content: request.body.content,
             author: request.body.author,
-            dateCreated: request.body.dateCreated
+            dateCreated: request.body.dateCreated,
+            imageId: request.body.imageId,
         }
     }; 
     let data = await db.collection("posts").updateOne({_id: new ObjectId(request.params.id)}, mongoObject);

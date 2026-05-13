@@ -21,16 +21,23 @@ export async function getPosts() {
 }
 
 export async function getPost(id) {
-      const response = await axios.get(`${URL}/posts/${id}`);
 
-    if (response.status === 200) {
-        return response.data;
-    }else {
-        return;
-    }
+
+    const response = await axios.get(`${URL}/posts/${id}`);
+
+    const post = response.data;
+    const data = await getImage(post.imageId);
+    post.image = data
+    return post
 }
 
 export async function createPost(post) {
+
+    const data = await createImage(post.file)
+    const imageId = data.data.VersionId
+
+    post.imageId = imageId;
+
     const response = await axios.post(`${URL}/posts`, post);
     return response;
 }
@@ -72,4 +79,20 @@ export async function verifyUser(user) {
     } else {
        return
     }
+}
+
+export async function createImage(file){
+    const formData = new FormData();
+    formData.append('image', file);
+  const response = await axios.post(`${URL}/images`, formData, {
+    headers: {
+        'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response; 
+}
+
+export async function getImage(id) {
+    const response = await axios.get(`${URL}/images/${id}`);
+    return response;
 }

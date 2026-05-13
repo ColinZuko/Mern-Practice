@@ -7,6 +7,7 @@ export function CreateBlog() {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [content, setContent] = useState('')  
+    const [file, setFile] = useState()
 
     async function handlesubmit(e) {
         e.preventDefault()
@@ -16,7 +17,8 @@ export function CreateBlog() {
             description: description,
             content: content,
             author: null,
-            dateCreated: new Date()
+            dateCreated: new Date(),
+            file: file
         }
 
         await createPost(submitObject)
@@ -24,6 +26,10 @@ export function CreateBlog() {
         setTitle('')
         setDescription('')
         setContent('')
+    }
+
+    function handleFileUpload(e){
+        const file = e.target.files[0];
     }
 
     return (
@@ -34,7 +40,11 @@ export function CreateBlog() {
             <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} required name="description" placeholder="Description" />
             <label>Blog Content: </label>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={5000} required name="content" placeholder="Content" />
+            <label>Insert Header Image: </label>
+            <input type="file" onChange={handleFileUpload} required/>
             <button type="submit">Submit</button>
         </form>
     )
 }
+
+//stopped on file upload 4:53:35
