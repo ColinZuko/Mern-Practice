@@ -34,7 +34,7 @@ export async function getPost(id) {
 export async function createPost(post) {
 
     const data = await createImage(post.file)
-    const imageId = data.data.VersionId
+    const imageId = post.file.name;
 
     post.imageId = imageId;
 

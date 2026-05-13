@@ -29,7 +29,7 @@ awsRoutes.route("/images/:id").get(verifyToken, async (request, response) => {
 
     const contenttype = data.ContentType;
     const srcString = await data.Body.transformToString('base64');
-    const imageSource = `data:${contenttype};base64:, ${srcString}`;
+    const imageSource = `data:${contenttype};base64,${srcString}`;
 
     response.json({ imageSource });
 });
@@ -40,8 +40,8 @@ awsRoutes.route("/images").post(verifyToken, async (request, response) => {
     const file = request.files[0];
     const bucketParams = {
         Bucket: s3Bucket,
-        Key: file.name,
-        Body: file.data,
+        Key: file.originalname,
+        Body: file.buffer,
     };
 
     const data = await s3Client.send(new PutObjectCommand(bucketParams));
