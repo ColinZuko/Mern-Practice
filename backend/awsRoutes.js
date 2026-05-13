@@ -9,7 +9,7 @@ const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = re
 let awsRoutes = express.Router();
 const s3Bucket = "colinblogstorage"
 
-const s3 = new S3Client({ region: "eu-north-1",
+const s3Client = new S3Client({ region: "eu-north-1",
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY,
         secretAccessKey: process.env.AWS_SECRET_KEY

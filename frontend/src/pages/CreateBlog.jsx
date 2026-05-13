@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createPost } from '../api'
 
 
@@ -8,6 +8,10 @@ export function CreateBlog() {
     const [description, setDescription] = useState('')
     const [content, setContent] = useState('')  
     const [file, setFile] = useState()
+
+    const MAX_FILE_SIZE = 15000000; // 15MB
+
+    const inputFile = useRef(null)
 
     async function handlesubmit(e) {
         e.preventDefault()
@@ -30,6 +34,20 @@ export function CreateBlog() {
 
     function handleFileUpload(e){
         const file = e.target.files[0];
+        const fileExtension = file.name.substring(file.name.lastIndexOf('.'));
+        if (fileExtension != '.jpg' && fileExtension != '.jpeg' && fileExtension != '.png') {
+            alert('Please upload a valid image file (jpg, jpeg, png)');
+            inputFile.current.value = "";
+            inputFile.current.type = "file";
+            return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File size exceeds the maximum limit of 15MB');
+            inputFile.current.value = "";
+            inputFile.current.type = "file";
+            return;
+        }
+        setFile(file);
     }
 
     return (
@@ -41,10 +59,9 @@ export function CreateBlog() {
             <label>Blog Content: </label>
             <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={5000} required name="content" placeholder="Content" />
             <label>Insert Header Image: </label>
-            <input type="file" onChange={handleFileUpload} required/>
+            <input type="file" ref={inputFile} onChange={handleFileUpload} required/>
             <button type="submit">Submit</button>
         </form>
     )
 }
 
-//stopped on file upload 4:53:35
