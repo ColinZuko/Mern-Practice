@@ -39,4 +39,3 @@ export function ReadBlog() {
     )
 }
 
-//ended after image displaying, next istailwind setup 5:05:02

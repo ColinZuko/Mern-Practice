@@ -1,5 +1,7 @@
 import { createUser } from "../api"
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function CreateUser() {
     const [user, setUser] = useState({
@@ -22,11 +24,11 @@ export function CreateUser() {
     };
 
         return (
-            <form onSubmit={handleSubmit}>
-                <input placeholder={"Name"} onChange={handleChange} name="name" required maxLength={20}/>
-                <input placeholder={"Email"} onChange={handleChange} name="email" required maxLength={50}/>
-                <input placeholder={"Password"} onChange={handleChange} name="password" type="password" required maxLength={20}/>
-                <button type="submit">Create Account</button>
+            <form onSubmit={handleSubmit} className="flex flex-col">
+                <Input placeholder={"Name"} onChange={handleChange} name="name" required maxLength={20} className="mb-1"/>
+                <Input placeholder={"Email"} onChange={handleChange} name="email" required maxLength={50} className="mb-1"/>
+                <Input placeholder={"Password"} onChange={handleChange} name="password" type="password" required maxLength={20} className="mb-4"/>
+                <Button type="submit" className="mb-2 hover:cursor-pointer">Create Account</Button>
             </form>
         )
 }

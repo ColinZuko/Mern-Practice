@@ -1,6 +1,7 @@
 import { CreateUser } from "../components/createUser"
 import{ Login } from "../components/Login"
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 export function Landing() {
     //view == 0 -> login
@@ -9,18 +10,22 @@ export function Landing() {
         
        return (
 
-        <>
+        <div className="flex justify-center items-center w-screen h-screen">
             {!view ? 
-            <>
+            <div className="flex flex-col w-96">
             <Login />
-            <button onClick={() => setView(1)}>Don't have an account? Create one here.</button>
-            </> : 
-            <>
+            <Button onClick={() => setView(1)} className="hover:cursor-pointer">
+                Create new Account
+            </Button>
+            </div> : 
+            <div className="flex flex-col w-96">
             <CreateUser />
-            <button onClick={() => setView(0)}>Already have an account? Log in here.</button>
-            </>
+            <Button onClick={() => setView(0)} className="hover:cursor-pointer">
+                Log into existing account
+            </Button>
+            </div>
             }
-        </>
+        </div>
        )
 
 

@@ -1,4 +1,14 @@
 import { Link } from 'react-router-dom'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+
 
 export function BlogCard({ post }){
 
@@ -6,12 +16,20 @@ export function BlogCard({ post }){
         let stringDate = date.toString()
 
        return(
-            <Link to={`/readblog/${post._id}`} className='post'>
-                <h1>{post.title}</h1>                   
-                <h2>{post.description}</h2>
-                <h3>{stringDate.slice(4, 15)}</h3>
+        <Card className="flex w-[55vw] mx-auto min-h-44 flex flex-col justify-center my-4 hover:bg-muted">
+            <Link to={`/readblog/${post._id}`} className='flex flex-col flex-grow justify-between w-full h-full p-4'>
+                <CardHeader>
+                    <CardTitle><h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 text-primary">{post.title}</h2></CardTitle>
+                    <CardDescription><h2>{post.description}</h2></CardDescription>
+                </CardHeader>
+                <CardFooter>
+                    <p>{stringDate.slice(4, 15)}</p>
+                </CardFooter>
             </Link>
+        </Card>
        ) 
 
      
     }
+
+    //ended on blogcard styling next is home page styling
