@@ -1,4 +1,4 @@
-import { createUser } from "../api"
+import { CreateUser } from "../api"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ export function CreateUser() {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        let response = await createUser(user);
+        let response = await CreateUser(user);
         console.log(response);  
         if (response.status !== 200) {
             alert("An error occurred while creating your account. Please try again later.");
