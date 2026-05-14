@@ -1,5 +1,10 @@
 import { useState, useRef } from 'react'
 import { createPost } from '../api'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import * as jwt_decode from "jwt-decode"
 
 
 export function CreateBlog() {
@@ -16,14 +21,19 @@ export function CreateBlog() {
     async function handlesubmit(e) {
         e.preventDefault()
 
+        const token = sessionStorage.getItem("User");
+        const decodedUser = jwt_decode.jwtDecode(token);
+
         let submitObject = {
             title: title,
             description: description,
             content: content,
-            author: null,
+            author: decodedUser._id,
+            authorName: decodedUser.name,
             dateCreated: new Date(),
             file: file
         }
+        
 
         await createPost(submitObject)
 
@@ -51,17 +61,18 @@ export function CreateBlog() {
     }
 
     return (
-        <form onSubmit={handlesubmit}>
-            <label>Blog Post Title: </label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required name="title" placeholder="Title" />
-            <label>Blog Description: </label>
-            <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} required name="description" placeholder="Description" />
-            <label>Blog Content: </label>
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={5000} required name="content" placeholder="Content" />
-            <label>Insert Header Image: </label>
-            <input type="file" ref={inputFile} onChange={handleFileUpload} required/>
-            <button type="submit">Submit</button>
-        </form>
+        <div className='flex flex-col items-center justify-center mt-20 w-full'>
+            <form onSubmit={handlesubmit} className='w-1/3'>
+                <Label className="mb-2">Blog Post Title: </Label>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={100} required name="title" placeholder="Title" />
+                <Label className="my-2">Blog Description: </Label>
+                <Input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} required name="description" placeholder="Description" />
+                <Label className="my-2">Blog Content: </Label>
+                <Textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={10000} required name="content" placeholder="Content" className="min-h-[200px]" />
+                <Label className="my-2" >Insert Header Image: </Label>
+                <Input type="file" ref={inputFile} onChange={handleFileUpload} className="cursor-pointer hover:bg-accent" required/>
+                <Button type="submit" className="mt-4">Submit</Button>
+            </form>
+        </div>
     )
 }
-

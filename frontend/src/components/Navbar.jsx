@@ -33,7 +33,7 @@ export function Navbar() {
                     sessionStorage.removeItem("User");
                     window.location.reload();
                 }}
-                className="text-primary-foreground background-transparent border-2 border-primary-foreground absolute right-4 hover:cursor-pointer"
+                className="text-primary-foreground background-transparent border-2 border-primary-foreground absolute right-4 hover:cursor-pointer hover:border-red-500"
             >
                 Log Out
             </Button>

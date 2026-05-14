@@ -15,7 +15,7 @@ export function Home() {
     }, [])
 
     return (
-        <div className='posts'>
+        <div className='flex flex-col items-center justify-center mt-20'>
             {posts.map((post) => {                
                 return(
                     <BlogCard post={post} />

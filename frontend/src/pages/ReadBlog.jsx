@@ -2,6 +2,7 @@ import { getPost} from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getImage } from '../api';
+import { Button } from '../components/ui/button';
 
 export function ReadBlog() {
 
@@ -23,19 +24,23 @@ export function ReadBlog() {
     }, [])
 
     return (
-        <>
-            <button onClick={() => navigate(-1)}>Back</button>
-            <h1>{post.title}</h1>
-            <h2>{post.description}</h2>
-            {post.image?.data?.imageSource && (
-    <img 
-        src={post.image.data.imageSource.replace('application/octet-stream', 'image/png')} 
-        alt="Blog cover" 
-    />
-)}
-            <h3>{post.dateCreated}</h3>
-            <p>{post.content}</p>
-        </>
+        <div className='flex flex-col items-center justify-center mt-15 mb-20 w-1/2'>
+            <Button onClick={() => navigate(-1)} className='mb-4 hover:cursor-pointer'>Back</Button>
+            <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance mb-4">{post.title}</h1>
+            <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 mb-4">{post.description}</h2>
+            <div className='flex w-full justify-center my-4'>
+                {post.image?.data?.imageSource && (
+                    <img 
+                        src={post.image.data.imageSource.replace('application/octet-stream', 'image/png')} 
+                        alt="Blog cover" 
+                        className='max-h-[50vw] my-4 rounded-md shadow-md'
+                    />
+                )}
+            </div>
+
+            <h3 className="scroll-m-20 border-b pb-2 text-xl font-semibold tracking-tight first:mt-0">{post.dateCreated}</h3>
+            <p className="text-muted-foreground font-medium">By {post.authorName || "Unknown Author"}</p>
+            <p className="leading-7 [&:not(:first-child)]:mt-6 whitespace-pre-wrap text-left w-full">{post.content}</p>
+        </div>
     )
 }
-

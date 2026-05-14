@@ -27,10 +27,19 @@ export function CreateUser() {
             <form onSubmit={handleSubmit} className="flex flex-col">
                 <Input placeholder={"Name"} onChange={handleChange} name="name" required maxLength={20} className="mb-1"/>
                 <Input placeholder={"Email"} onChange={handleChange} name="email" required maxLength={50} className="mb-1"/>
-                <Input placeholder={"Password"} onChange={handleChange} name="password" type="password" required maxLength={20} className="mb-4"/>
+                <Input 
+                    placeholder={"Password"} 
+                    onChange={handleChange} 
+                    name="password" 
+                    type="password" 
+                    required 
+                    maxLength={20} 
+                    minLength={6} 
+                    pattern="(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).*" 
+                    title="Password must contain at least one uppercase letter, one number, and one symbol."
+                    className="mb-4"
+                />
                 <Button type="submit" className="mb-2 hover:cursor-pointer">Create Account</Button>
             </form>
         )
 }
-
-

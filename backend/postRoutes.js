@@ -38,6 +38,8 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
             content: request.body.content,
             dateCreated: request.body.dateCreated,
             imageId: request.body.imageId,
+            author: request.body.author,
+            authorName: request.body.authorName
         }; 
         let data = await db.collection("posts").insertOne(mongoObject);
         response.json(data);
