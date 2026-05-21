@@ -3,12 +3,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function CreateUser() {
+export function CreateUser({ setView }) {
     const [user, setUser] = useState({
         name: '',
         email: '',
         password: ''
     });
+    const [successMessage, setSuccessMessage] = useState('');
 
     function handleChange(e){
         setUser({ ...user, [e.target.name]: e.target.value })
@@ -20,6 +21,11 @@ export function CreateUser() {
         console.log(response);  
         if (response.status !== 200) {
             alert("An error occurred while creating your account. Please try again later.");
+        } else {
+            setSuccessMessage("Account created successfully! Redirecting to login...");
+            setTimeout(() => {
+                if (setView) setView(0);
+            }, 2000);
         }
     };
 
@@ -40,6 +46,7 @@ export function CreateUser() {
                     className="mb-4"
                 />
                 <Button type="submit" className="mb-2 hover:cursor-pointer">Create Account</Button>
+            {successMessage && <p className="text-green-500 text-center mt-2 font-medium">{successMessage}</p>}
             </form>
         )
 }

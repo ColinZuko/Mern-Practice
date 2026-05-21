@@ -2,6 +2,7 @@ import { BlogCard } from "../components/BlogCard"
 import { useState, useEffect } from "react"
 import { getPosts } from "../api"
 import * as jwt_decode from "jwt-decode"
+import { Button } from "@/components/ui/button";
 
 
 
@@ -33,6 +34,14 @@ export function Profile() {
                 <h2 className="text-xl mb-4 w-full">{user.email}</h2>
                 <label className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0 w-full">Join Date</label>
                 <h2 className="text-xl mb-4 w-full">{user.joinDate ? new Date(user.joinDate).toString().slice(4, 15) : ''}</h2>
+                <Button
+                    onClick={() => {
+                        sessionStorage.removeItem("User");
+                        window.location.reload();
+                    }}
+                    className="text-text mt-4 bg-background border-2 border-foreground hover:cursor-pointer hover:border-red-500 hover:text-red-500 hover:bg-background/80">
+                    Log Out
+                </Button> 
             </div>
             {posts.map((post) => {
                 return (

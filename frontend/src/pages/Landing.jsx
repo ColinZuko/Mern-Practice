@@ -14,13 +14,13 @@ export function Landing() {
             {!view ? 
             <div className="flex flex-col w-96">
             <Login />
-            <Button onClick={() => setView(1)} className="hover:cursor-pointer">
+            <Button onClick={() => setView(1)} className="hover:cursor-pointer bg-primary">
                 Create new Account
             </Button>
             </div> : 
             <div className="flex flex-col w-96">
-            <CreateUser />
-            <Button onClick={() => setView(0)} className="hover:cursor-pointer">
+            <CreateUser setView={setView} />
+            <Button onClick={() => setView(0)} className="hover:cursor-pointer bg-primary">
                 Log into existing account
             </Button>
             </div>

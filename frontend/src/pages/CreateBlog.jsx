@@ -13,6 +13,7 @@ export function CreateBlog() {
     const [description, setDescription] = useState('')
     const [content, setContent] = useState('')  
     const [file, setFile] = useState()
+    const [successMessage, setSuccessMessage] = useState('')
 
     const MAX_FILE_SIZE = 15000000; // 15MB
 
@@ -40,6 +41,14 @@ export function CreateBlog() {
         setTitle('')
         setDescription('')
         setContent('')
+        setFile(null)
+        if (inputFile.current) {
+            inputFile.current.value = ""
+        }
+        
+        setSuccessMessage('Blog post created successfully!')
+        // Automatically hide the message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000)
     }
 
     function handleFileUpload(e){
@@ -72,6 +81,7 @@ export function CreateBlog() {
                 <Label className="my-2" >Insert Header Image: </Label>
                 <Input type="file" ref={inputFile} onChange={handleFileUpload} className="cursor-pointer hover:bg-accent" required/>
                 <Button type="submit" className="mt-4">Submit</Button>
+            {successMessage && <p className="text-green-500 text-center mt-4 font-medium">{successMessage}</p>}
             </form>
         </div>
     )

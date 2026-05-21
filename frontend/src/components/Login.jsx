@@ -34,7 +34,9 @@ export function Login() {
             <form onSubmit={handleSubmit} className="flex flex-col">
                 <Input placeholder={"Email"} onChange={handleChange} name="email" required maxLength={50} className="mb-1"/>
                 <Input placeholder={"Password"} onChange={handleChange} name="password" type="password" required maxLength={20} className="mb-4"/>
-                <Button type="submit" className="mb-2 hover:cursor-pointer">Login</Button>
+                <Button type="submit" className="mb-2 hover:cursor-pointer bg-primary text-primary-foreground">
+                    Login
+                </Button>
             </form>
         )
 }
