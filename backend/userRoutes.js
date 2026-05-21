@@ -37,7 +37,7 @@ userRoutes.route("/users").post(async (request, response) => {
     const takenEmail = await db.collection("users").findOne({ email: request.body.email });
 
     if (takenEmail) {
-        response.json({ message: "Email is already in use" });
+        response.status(400).json({ message: "Email is already in use" });
     }else {
         const hash = await bcrypt.hash(request.body.password, SALT_ROUNDS);
 

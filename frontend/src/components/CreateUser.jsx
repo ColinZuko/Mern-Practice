@@ -10,6 +10,7 @@ export function CreateUser({ setView }) {
         password: ''
     });
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     function handleChange(e){
         setUser({ ...user, [e.target.name]: e.target.value })
@@ -17,15 +18,29 @@ export function CreateUser({ setView }) {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        let response = await createUser(user);
-        console.log(response);  
-        if (response.status !== 200) {
-            alert("An error occurred while creating your account. Please try again later.");
-        } else {
-            setSuccessMessage("Account created successfully! Redirecting to login...");
-            setTimeout(() => {
-                if (setView) setView(0);
-            }, 2000);
+        setErrorMessage('');
+        setSuccessMessage('');
+
+        try {
+            let response = await createUser(user);
+            console.log(response);  
+            
+            if (response && response.status !== 200 && response.status !== 201) {
+                setErrorMessage("An error occurred while creating your account. Please try again later.");
+            } else {
+                setSuccessMessage("Account created successfully! Redirecting to login...");
+                setTimeout(() => {
+                    if (setView) setView(0);
+                }, 2000);
+            }
+        } catch (error) {
+            console.error(error);
+            // If using Axios, the backend error response is attached to error.response
+            if (error.response && (error.response.status === 400 || error.response.status === 409)) {
+                setErrorMessage("An account with this email already exists.");
+            } else {
+                setErrorMessage("An error occurred while creating your account. Please try again later.");
+            }
         }
     };
 
@@ -46,6 +61,7 @@ export function CreateUser({ setView }) {
                     className="mb-4"
                 />
                 <Button type="submit" className="mb-2 hover:cursor-pointer">Create Account</Button>
+            {errorMessage && <p className="text-red-500 text-center mt-2 font-medium">{errorMessage}</p>}
             {successMessage && <p className="text-green-500 text-center mt-2 font-medium">{successMessage}</p>}
             </form>
         )

@@ -20,7 +20,7 @@ export function Navbar() {
     
     {/* Left Side */}
     <div className="flex items-center">
-        <Link to="/home" className="transition-opacity hover:opacity-90">
+        <Link to="/home" className="transition-opacity">
             <img src={logo} alt="Logo" className="h-14 w-auto object-contain" />
         </Link>
     </div>
