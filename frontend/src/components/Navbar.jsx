@@ -10,7 +10,7 @@ import {
     navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu"
 import { Button } from "@/components/ui/button";
-import logo from "../assets/logo.png"
+import logo from "../assets/Logo.png"
 
 
 
