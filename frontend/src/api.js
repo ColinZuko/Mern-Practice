@@ -10,6 +10,17 @@ axios.interceptors.request.use((config) => {
     return config;
 });
 
+// NEW: Fetch top 6 trending/most viewed posts
+export async function getTrendingPosts() {
+    const response = await axios.get(`${URL}/posts/trending`);
+    
+    if (response.status === 200) {
+        return response.data;
+    } else {
+        return []; // Return clean empty fallback array on failure
+    }
+}
+
 export async function getPosts() {
     const response = await axios.get(`${URL}/posts`);
 
@@ -21,8 +32,6 @@ export async function getPosts() {
 }
 
 export async function getPost(id) {
-
-
     const response = await axios.get(`${URL}/posts/${id}`);
 
     const post = response.data;
@@ -32,7 +41,6 @@ export async function getPost(id) {
 }
 
 export async function createPost(post) {
-
     const data = await createImage(post.file)
     const imageId = post.file.name;
 
@@ -77,7 +85,7 @@ export async function verifyUser(user) {
     if (response.data.success){
         return response.data.token;
     } else {
-       return
+        return
     }
 }
 

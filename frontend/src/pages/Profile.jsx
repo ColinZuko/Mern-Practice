@@ -26,7 +26,7 @@ export function Profile() {
     console.log(user);
 
     return (
-        <div className="flex flex-col items-center w-full mt-10">
+        <div className="flex flex-col items-center w-[35vw] mt-10 space-y-12 mx-auto">
             <div className="flex flex-col items-start w-[55vw] mb-8 text-left">
                 <label className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight first:mt-0 w-full">Name</label>
                 <h2 className="text-xl mb-4 w-full">{user.name}</h2>

@@ -12,19 +12,42 @@ postRoutes.route("/posts").get(verifyToken, async (request, response) => {
     let data = await db.collection("posts").find({}).toArray();
     if (data.length > 0) {
         response.json(data);
-    }else {
-        throw new Error("No posts found");
+    } else {
+        response.status(404).json({ message: "No posts found" });
     }
 });
 
-//#2 - Retrieve a post
-postRoutes.route("/posts/:id").get(verifyToken, async (request, response) => {
-    let db = database.getDb();
-    let data = await db.collection("posts").findOne({ _id: new ObjectId(request.params.id)});
-    if (Object.keys(data).length > 0) {
+// NEW: #1b - Retrieve top 6 trending/most viewed posts
+// PLACED ABOVE /posts/:id TO PREVENT EXPRESS ROUTING CONFLICTS
+postRoutes.route("/posts/trending").get(verifyToken, async (request, response) => {
+    try {
+        let db = database.getDb();
+        // Sorts by views descending (-1) and pulls a maximum of 6 elements
+        let data = await db.collection("posts")
+            .find({})
+            .sort({ views: -1 })
+            .limit(6)
+            .toArray();
+            
         response.json(data);
-    }else {
-        throw new Error("No posts found");
+    } catch (error) {
+        console.error("Error fetching trending posts:", error);
+        response.status(500).json({ success: false, error: error.message });
+    }
+});
+
+//#2 - Retrieve a single post
+postRoutes.route("/posts/:id").get(verifyToken, async (request, response) => {
+    try {
+        let db = database.getDb();
+        let data = await db.collection("posts").findOne({ _id: new ObjectId(request.params.id)});
+        if (data && Object.keys(data).length > 0) {
+            response.json(data);
+        } else {
+            response.status(404).json({ message: "Post not found" });
+        }
+    } catch (error) {
+        response.status(400).json({ message: "Invalid ID format" });
     }
 });
 
@@ -39,13 +62,34 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
             dateCreated: request.body.dateCreated,
             imageId: request.body.imageId,
             author: request.body.author,
-            authorName: request.body.authorName
+            authorName: request.body.authorName,
+            views: 0 // Initialize tracking metrics on every new creation
         }; 
         let data = await db.collection("posts").insertOne(mongoObject);
         response.json(data);
     } catch (error) {
         console.error("Error creating post:", error);
         response.status(500).json({ success: false, message: "Server error", error: error.message });
+    }
+});
+
+// NEW: #3b - Increment view count on a single post
+// Uses $inc atomic operations to safely step count without reading first
+postRoutes.route("/posts/:id/view").patch(verifyToken, async (request, response) => {
+    try {
+        let db = database.getDb();
+        let data = await db.collection("posts").updateOne(
+            { _id: new ObjectId(request.params.id) },
+            { $inc: { views: 1 } }
+        );
+        
+        if (data.matchedCount === 0) {
+            return response.status(404).json({ message: "Post not found to log analytics" });
+        }
+        response.json({ success: true, message: "View metrics tracked successfully" });
+    } catch (error) {
+        console.error("Error logging analytics:", error);
+        response.status(500).json({ success: false, error: error.message });
     }
 });
 
@@ -85,7 +129,6 @@ function verifyToken(request, response, next) {
             return response.status(403).json({ message: "Invalid authentication token" });
         }
         request.user = user;
-
         next();
     });
 }
