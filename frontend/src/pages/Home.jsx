@@ -33,8 +33,10 @@ export function Home() {
     }
     loadAllPageData()
   }, [])
+  
 
   return (
+    <div className="max-w-[1500px]">
     <div className="w-full max-w-[90vw] mx-auto mt-20 px-12 space-y-24 pb-20">
       
       {/* SECTION 1: LATEST POSTS */}
@@ -145,5 +147,7 @@ export function Home() {
       </section>
 
     </div>
+    </div>
   )
+
 }
