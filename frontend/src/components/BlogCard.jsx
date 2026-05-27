@@ -64,7 +64,7 @@ return (
           {post.title}
         </h3>
         
-        <p className="leading-7 [&:not(:first-child)]:mt-6">
+        <p className="text-xs text-stone-500 line-clamp-2 min-h-8">
           {post.description}
         </p>
       </CardHeader>
