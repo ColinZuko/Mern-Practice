@@ -207,7 +207,7 @@ export function CreateBlog() {
                             </div>
                             <div className="space-y-1">
                                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">{title || "Untitled Recipe Header"}</h3>
-                                <p className="text-xs text-stone-500 line-clamp-2 min-h-8">{description || "Your recipe description layout text hook will stream right here..."}</p>
+                                <p className="text-xs text-stone-500 line-clamp-2 min-h-8">{description || "Your recipe description will show right here..."}</p>
                             </div>
                             <div className="pt-2 border-t border-stone-100 text-[11px] font-medium text-stone-400 uppercase tracking-wider flex justify-between">
                                 <span>Just Now</span>
