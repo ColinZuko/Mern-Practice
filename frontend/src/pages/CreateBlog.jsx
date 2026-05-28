@@ -7,10 +7,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { useNavigate } from 'react-router-dom'
 import * as jwt_decode from "jwt-decode"
 
+const CUISINE_OPTIONS = ['European', 'USA', 'African', 'Asia', 'Indian', 'Italian', 'Mediterranean', 'Latin American', 'Middle Eastern', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dessert', 'Quick & Easy', 'Healthy', 'Comfort Food'];
+
 export function CreateBlog() {
     const [title, setTitle] = useState('')
     const [description, setDescription] = useState('')
     const [content, setContent] = useState('')  
+    const [selectedCuisines, setSelectedCuisines] = useState([])
     const [file, setFile] = useState(null)
     const [imagePreview, setImagePreview] = useState(null) // Holds the visual upload snapshot
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -19,6 +22,17 @@ export function CreateBlog() {
     const MAX_FILE_SIZE = 15000000; // 15MB
     const inputFile = useRef(null)
     const navigate = useNavigate()
+
+    const handleTagClick = (cuisine) => {
+        const normalized = cuisine.toLowerCase();
+        if (selectedCuisines.includes(normalized)) {
+            // Remove if already selected
+            setSelectedCuisines(selectedCuisines.filter(c => c !== normalized));
+        } else {
+            // Add if not selected
+            setSelectedCuisines([...selectedCuisines, normalized]);
+        }
+    }
 
     // Clean up memory leaks from your temporary local file URLs
     useEffect(() => {
@@ -41,6 +55,7 @@ export function CreateBlog() {
                 description: description,
                 content: content,
                 author: decodedUser._id,
+                cuisines: selectedCuisines,
                 authorName: decodedUser.name,
                 dateCreated: new Date(),
                 file: file
@@ -128,7 +143,32 @@ export function CreateBlog() {
                             className="bg-stone-50/50 focus-visible:ring-ring rounded-xl py-5"
                         />
                     </div>
-
+                    <div className="space-y-3">
+                        <div className="flex justify-between items-baseline">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-stone-500">Cuisine Tags</Label>
+                            <span className="text-[11px] text-stone-400">Select all that apply</span>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            {CUISINE_OPTIONS.map((opt) => {
+                                const isSelected = selectedCuisines.includes(opt.toLowerCase());
+                                return (
+                                    <button
+                                        key={opt}
+                                        type="button" // Critical to prevent form submission on click
+                                        onClick={() => handleTagClick(opt)}
+                                        className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wide border transition-all duration-150 cursor-pointer ${
+                                            isSelected 
+                                                ? 'bg-primary border-primary text-white shadow-sm shadow-primary/10 scale-[0.98]' 
+                                                : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                                        }`}
+                                    >
+                                        {opt}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="content" className="text-xs font-bold uppercase tracking-wider text-stone-500">Ingredients & Instructions</Label>
                         <Textarea 
@@ -200,14 +240,22 @@ export function CreateBlog() {
                         <div className="flex flex-col bg-white border border-stone-200/60 rounded-2xl p-4 shadow-sm space-y-4 pointer-events-none opacity-80">
                             <div className="aspect-[16/10] w-full overflow-hidden bg-stone-100 rounded-xl relative">
                                 {imagePreview ? (
-                                    <img src={imagePreview} alt="Preview thumbnail" classname="w-full h-full object-cover" />
+                                    <img src={imagePreview} alt="Preview thumbnail" className="w-full h-full object-cover" />
                                 ) : (
                                     <div className="flex h-full w-full items-center justify-center bg-stone-200/60 text-xs text-stone-400">No Snapshot Loaded</div>
                                 )}
                             </div>
+                            <div className="flex flex-wrap gap-1 min-h-6">
+                                    {selectedCuisines.map(tag => (
+                                        <span key={tag} className="text-[9px] font-bold uppercase tracking-wider text-white bg-primary px-1.5 py-1.5 rounded-md">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
                             <div className="space-y-1">
                                 <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">{title || "Untitled Recipe Header"}</h3>
                                 <p className="text-xs text-stone-500 line-clamp-2 min-h-8">{description || "Your recipe description will show right here..."}</p>
+
                             </div>
                             <div className="pt-2 border-t border-stone-100 text-[11px] font-medium text-stone-400 uppercase tracking-wider flex justify-between">
                                 <span>Just Now</span>

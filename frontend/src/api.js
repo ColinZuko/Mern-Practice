@@ -21,8 +21,17 @@ export async function getTrendingPosts() {
     }
 }
 
-export async function getPosts() {
-    const response = await axios.get(`${URL}/posts`);
+export async function getPosts(searchQuery = '', cuisineFilter = '') {
+
+    let url = `${URL}/posts?`;
+    if (searchQuery) {
+        url += `search=${encodeURIComponent(searchQuery)}&`;
+    }
+    if (cuisineFilter) {
+        url += `cuisine=${encodeURIComponent(cuisineFilter)}&`;
+    }
+
+    const response = await axios.get(url);
 
     if (response.status === 200) {
         return response.data;

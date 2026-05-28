@@ -67,7 +67,18 @@ return (
         <p className="text-xs text-stone-500 line-clamp-2 min-h-8">
           {post.description}
         </p>
+
       </CardHeader>
+      <div className="flex flex-wrap gap-1 mb-2 ml-2">
+    {post.cuisines && post.cuisines.map((tag) => (
+        <span 
+            key={tag} 
+            className="text-[9px] font-bold uppercase tracking-wider text-white bg-primary px-1.5 py-1.5 rounded-md"
+        >
+            {tag}
+        </span>
+    ))}
+</div>
 
       {/* Meta Layout Sections */}
       <CardContent className="px-4 pb-2 pt-0 shrink-0">

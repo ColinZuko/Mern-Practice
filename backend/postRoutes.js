@@ -8,12 +8,26 @@ let postRoutes = express.Router();
 
 //#1 - Retrieve all posts
 postRoutes.route("/posts").get(verifyToken, async (request, response) => {
-    let db = database.getDb();
-    let data = await db.collection("posts").find({}).toArray();
-    if (data.length > 0) {
-        response.json(data);
-    } else {
-        response.status(404).json({ message: "No posts found" });
+    try {
+        let db = database.getDb();
+        let query = {};
+
+        // CHANGED: Match if the single active filter exists inside the document's cuisines array
+        if (request.query.cuisine) {
+            query.cuisines = { $in: [request.query.cuisine.toLowerCase()] };
+        }
+
+        if (request.query.search) {
+            query.$or = [
+                { title: { $regex: request.query.search, $options: 'i' } },
+                { description: { $regex: request.query.search, $options: 'i' } }
+            ];
+        }
+
+        let data = await db.collection("posts").find(query).toArray();
+        response.json(data || []);
+    } catch (error) {
+        response.status(500).json({ message: "Server error", error: error.message });
     }
 });
 
@@ -60,6 +74,7 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
             description: request.body.description,
             content: request.body.content,
             dateCreated: request.body.dateCreated,
+            cuisines: Array.isArray(request.body.cuisines) ? request.body.cuisines : [], // Normalize for consistent querying
             imageId: request.body.imageId,
             author: request.body.author,
             authorName: request.body.authorName,

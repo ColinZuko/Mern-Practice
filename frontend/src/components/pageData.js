@@ -5,9 +5,14 @@ export const pageData = [
         path: "/home"
     },
       {
+        name: "Recipes",
+        path: "/contact"
+    },
+          {
         name: "Create Blog",
         path: "/createblog"
     },
+
           {
         name: "Profile",
         path: "/profile"
@@ -16,11 +21,6 @@ export const pageData = [
           {
         name: "About Me",
         path: "/about"
-    },
-
-          {
-        name: "Contact",
-        path: "/contact"
     },
 
 
