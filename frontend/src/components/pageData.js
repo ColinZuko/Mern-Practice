@@ -1,27 +1,24 @@
-
 export const pageData = [
-    {
-        name: "Home",
-        path: "/home"
-    },
-      {
-        name: "Recipes",
-        path: "/contact"
-    },
-          {
-        name: "Create Blog",
-        path: "/createblog"
-    },
+  {
+    name: "Home",
+    path: "/home",
+  },
+  {
+    name: "Recipes",
+    path: "/contact",
+  },
+  {
+    name: "Create Blog",
+    path: "/createblog",
+  },
 
-          {
-        name: "Profile",
-        path: "/profile"
-    },
+  {
+    name: "Profile",
+    path: "/profile",
+  },
 
-          {
-        name: "About Me",
-        path: "/about"
-    },
-
-
-]
+  {
+    name: "About",
+    path: "/about",
+  },
+];
