@@ -152,9 +152,11 @@ postRoutes.route("/posts/:id").put(verifyToken, async (request, response) => {
 
     // 3. HERE IS THE MISSING VARIABLE: Extract user identity from decrypted JWT token payload
     if (!request.user) {
-      return response.status(401).json({
-        message: "Authentication context missing. Please log in again.",
-      });
+      return response
+        .status(401)
+        .json({
+          message: "Authentication context missing. Please log in again.",
+        });
     }
 
     const currentUserId = request.user.id || request.user._id; // 👈 DEFINED HERE
@@ -182,10 +184,12 @@ postRoutes.route("/posts/:id").put(verifyToken, async (request, response) => {
     response.json({ success: true, message: "Recipe updated cleanly." });
   } catch (error) {
     console.error("Backend PUT crash detail:", error);
-    response.status(500).json({
-      message: "Internal server processing error",
-      error: error.message,
-    });
+    response
+      .status(500)
+      .json({
+        message: "Internal server processing error",
+        error: error.message,
+      });
   }
 });
 //#5 - Delete a post (Guarded with Ownership Validation)
@@ -194,59 +198,23 @@ postRoutes
   .delete(verifyToken, async (request, response) => {
     try {
       let db = database.getDb();
-      const paramId = request.params.id;
+      const postId = new ObjectId(request.params.id);
 
-      // 1. Structural sanitation of parameter ID strings
-      if (
-        !paramId ||
-        paramId.length !== 24 ||
-        !/^[0-9a-fA-F]{24}$/.test(paramId)
-      ) {
-        return response
-          .status(400)
-          .json({ message: "Invalid Recipe tracking ID format sent." });
-      }
-
-      const postId = new ObjectId(paramId);
-
-      // 2. Locate document targets inside the collection
       const post = await db.collection("posts").findOne({ _id: postId });
       if (!post) {
         return response.status(404).json({ message: "Recipe not found" });
       }
 
-      // 3. Fallback extraction layer checks for user identities inside tokens
-      if (!request.user) {
-        return response
-          .status(401)
-          .json({
-            message: "Authentication context missing. Please log in again.",
-          });
-      }
-
-      // Safely resolves whether the user object uses .id or ._id attributes
-      const currentUserId = request.user.id || request.user._id;
-
-      // Verify authorization match safely
-      if (
-        !currentUserId ||
-        !post.author ||
-        post.author.toString() !== currentUserId.toString()
-      ) {
+      // Protect delete access behind owner authorization boundaries
+      if (post.author.toString() !== request.user.id.toString()) {
         return response
           .status(403)
           .json({ message: "Unauthorized to delete this recipe" });
       }
 
-      // 4. Fire final document wipe
       let data = await db.collection("posts").deleteOne({ _id: postId });
-      response.json({
-        success: true,
-        message: "Post deleted successfully",
-        data,
-      });
+      response.json(data);
     } catch (error) {
-      console.error("Backend DELETE crash detail:", error);
       response.status(500).json({ error: error.message });
     }
   });
