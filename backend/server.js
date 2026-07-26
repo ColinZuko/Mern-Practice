@@ -20,9 +20,10 @@ app.use(express.json());
 app.use(upload.any());
 
 // Middleware 1: MongoDB connection handling
-const isServerless = process.env.VERCEL;
+/*const isServerless = process.env.VERCEL;
 
 if (isServerless) {
+  // Middleware that runs before each request in serverless
   app.use(async (req, res, next) => {
     try {
       await connect.connectToServer();
@@ -36,6 +37,7 @@ if (isServerless) {
   // For local development, connect to the database once.
   connect.connectToServer();
 }
+  */
 
 // Middleware 2: Strip the /api prefix for Vercel Serverless matching
 app.use((req, res, next) => {
