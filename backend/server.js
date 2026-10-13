@@ -17,6 +17,12 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// Lightweight check for uptime pings (keeps Render's free instance awake); never touches the database
+app.get(["/health", "/api/health"], (req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.use(express.json());
 app.use(upload.any());
 
