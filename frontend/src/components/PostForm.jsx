@@ -3,6 +3,7 @@ import { ImagePlus } from "lucide-react";
 import { imageUrl } from "../api";
 import { useAuth } from "../useAuth";
 import { RecipeContent } from "./RecipeContent";
+import { resizeImage } from "../lib/resizeImage";
 import {
   celsiusToFahrenheit,
   countItems,
@@ -14,7 +15,7 @@ import {
   readingTime,
 } from "../lib/recipes";
 
-const MAX_FILE_SIZE = 15000000; // 15MB
+const MAX_FILE_SIZE = 30000000; // 30MB before shrinking
 const ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
 
 const labelClass = "block text-sm font-medium";
@@ -127,6 +128,7 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
   const [tab, setTab] = useState("write");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [draftRestored, setDraftRestored] = useState(!!draft);
   const inputFile = useRef(null);
 
@@ -178,7 +180,7 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
     );
   }
 
-  function handleFile(e) {
+  async function handleFile(e) {
     const selected = e.target.files[0];
     if (!selected) return;
 
@@ -189,18 +191,22 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
       return;
     }
     if (selected.size > MAX_FILE_SIZE) {
-      setError("That image is larger than 15MB.");
+      setError("That image is larger than 30MB.");
       e.target.value = "";
       return;
     }
     setError("");
-    setFile(selected);
-    setPreview(URL.createObjectURL(selected));
+    // Big phone photos are shrunk first so recipe pages load quickly on phones
+    setPreparingPhoto(true);
+    const resized = await resizeImage(selected);
+    setPreparingPhoto(false);
+    setFile(resized);
+    setPreview(URL.createObjectURL(resized));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (submitting) return;
+    if (submitting || preparingPhoto) return;
     if (!title.trim() || !description.trim()) {
       setTab("write");
       setError("Please add a title and a short summary.");
@@ -366,10 +372,11 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
                   <span className="flex aspect-[16/9] flex-col items-center justify-center gap-2 text-muted-foreground group-hover:text-primary">
                     <ImagePlus className="h-8 w-8" />
                     <span className="text-sm font-medium">Click to upload</span>
-                    <span className="text-xs">JPG, PNG or WebP, up to 15MB. Landscape works best.</span>
+                    <span className="text-xs">JPG, PNG or WebP. Landscape works best; big photos are shrunk for you.</span>
                   </span>
                 )}
               </button>
+              {preparingPhoto && <p className={hintClass}>Preparing your photo…</p>}
               {draftRestored && !file && !preview && (
                 <p className={hintClass}>Photos aren't saved in drafts, so please add it again.</p>
               )}

@@ -5,7 +5,10 @@ name: Keep backend awake
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # Odd minutes on purpose: GitHub often delays or drops runs scheduled on the
+    # busy whole/half hours. Scheduled runs can still be late, so an external
+    # pinger (e.g. UptimeRobot on /health) is a good backup.
+    - cron: "7,17,27,37,47,57 * * * *"
   # Lets you run it by hand from the Actions tab
   workflow_dispatch:
 

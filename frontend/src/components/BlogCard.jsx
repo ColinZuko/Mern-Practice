@@ -1,28 +1,55 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 import { BreadIcon } from "./BreadIcon";
 import { imageUrl } from "../api";
 import { cuisineLabel, formatDate, postText, readingTime } from "../lib/recipes";
 
-// Post cover image with a neutral placeholder when it's missing or fails to load
-export function PostImage({ post, className = "", eager = false }) {
-  const [failed, setFailed] = useState(false);
-  const src = imageUrl(post.imageId);
+// Waits between attempts when an image fails. The free backend can take up to a
+// minute to wake up, so keep trying for about that long before giving up.
+const RETRY_DELAYS_MS = [3000, 6000, 12000, 20000, 30000];
 
-  if (!src || failed) {
+// Post cover image: retries while the backend wakes up, then falls back to a placeholder
+export function PostImage({ post, className = "", eager = false }) {
+  const [attempt, setAttempt] = useState(0);
+  const [waiting, setWaiting] = useState(false);
+  const baseSrc = imageUrl(post.imageId);
+  // Only give up after the last retry has also failed
+  const failed = attempt > RETRY_DELAYS_MS.length;
+
+  // After a failed load, wait a bit and then try again
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setTimeout(() => {
+      setAttempt((n) => n + 1);
+      setWaiting(false);
+    }, RETRY_DELAYS_MS[attempt]);
+    return () => clearTimeout(timer);
+  }, [waiting, attempt]);
+
+  function handleError() {
+    if (attempt < RETRY_DELAYS_MS.length) setWaiting(true);
+    else setAttempt(RETRY_DELAYS_MS.length + 1);
+  }
+
+  if (!baseSrc || failed) {
     return (
       <div className={`flex items-center justify-center bg-muted text-muted-foreground/50 ${className}`}>
         <ChefHat className="h-10 w-10" />
       </div>
     );
   }
+  if (waiting) {
+    return <div className={`animate-pulse bg-muted ${className}`} aria-label="Loading image" />;
+  }
+  // A changed URL makes the browser really ask again instead of reusing the failed attempt
+  const src = attempt > 0 ? `${baseSrc}?retry=${attempt}` : baseSrc;
   return (
     <img
       src={src}
       alt={post.title}
       loading={eager ? "eager" : "lazy"}
-      onError={() => setFailed(true)}
+      onError={handleError}
       className={`object-cover ${className}`}
     />
   );
