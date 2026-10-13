@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { getPosts, getTrendingPosts } from "../api";
 import { BlogCard } from "../components/BlogCard";
 import { CUISINES } from "../lib/recipes";
-import logo from "../assets/Logo.png";
+import { Logo } from "../components/Logo";
 
 function SectionHeading({ title, link, linkText }) {
   return (
@@ -140,11 +140,11 @@ export function Home() {
 
       {/* About band */}
       <section className="mt-20 grid items-center gap-8 rounded-3xl bg-primary px-8 py-12 text-primary-foreground sm:px-12 md:grid-cols-[auto_1fr]">
-        <img src={logo} alt="" className="h-24 w-24 rounded-full bg-white p-1" />
+        <Logo className="h-24 w-24 rounded-full ring-4 ring-white/20" />
         <div className="space-y-3">
           <h2 className="text-3xl font-semibold">Cooking at home, written down.</h2>
           <p className="max-w-2xl leading-relaxed text-primary-foreground/80">
-            ChefColin is a growing collection of tried-and-tested recipes from
+            Pickle &amp; Pan is a growing collection of tried-and-tested recipes from
             our own kitchens. Create a free account to save your favourites.
           </p>
           <Link

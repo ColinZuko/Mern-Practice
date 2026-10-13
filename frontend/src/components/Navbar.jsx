@@ -10,7 +10,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import logo from "../assets/Logo.png";
+import { Logo } from "./Logo";
 import { useAuth } from "../useAuth";
 import { initials, ROLE_LABELS } from "../lib/recipes";
 
@@ -70,9 +70,9 @@ export function Navbar() {
     <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
         <Link to="/home" className="flex shrink-0 items-center gap-2.5">
-          <img src={logo} alt="" className="h-9 w-9" />
+          <Logo className="h-9 w-9" />
           <span className="font-serif text-xl font-semibold tracking-tight">
-            ChefColin
+            Pickle &amp; Pan
           </span>
         </Link>
 

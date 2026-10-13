@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { CreateUser } from "../components/CreateUser";
 import { Login } from "../components/Login";
 import { useAuth } from "../useAuth";
-import logo from "../assets/Logo.png";
+import { Logo } from "../components/Logo";
 
 export function Landing() {
   const { isLoggedIn } = useAuth();
@@ -39,7 +39,7 @@ export function Landing() {
         </Link>
 
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
-          <img src={logo} alt="ChefColin" className="h-16 w-16" />
+          <Logo className="h-16 w-16" />
           <h1 className="mt-6 text-3xl font-semibold">
             {isLogin ? "Welcome back" : "Create your account"}
           </h1>

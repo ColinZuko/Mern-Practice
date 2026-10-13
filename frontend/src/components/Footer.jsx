@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logo from "../assets/Logo.png";
+import { Logo } from "./Logo";
 import { CUISINES } from "../lib/recipes";
 
 export function Footer() {
@@ -8,8 +8,8 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <Link to="/home" className="flex items-center gap-2.5">
-            <img src={logo} alt="" className="h-10 w-10" />
-            <span className="font-serif text-2xl font-semibold">ChefColin</span>
+            <Logo className="h-10 w-10" />
+            <span className="font-serif text-2xl font-semibold">Pickle &amp; Pan</span>
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
             Homemade recipes, kitchen notes and food stories. Savor every bite.
@@ -47,7 +47,7 @@ export function Footer() {
       </div>
       <div className="border-t">
         <p className="mx-auto max-w-7xl px-4 py-6 text-xs text-muted-foreground sm:px-6">
-          © {new Date().getFullYear()} ChefColin. All rights reserved.
+          © {new Date().getFullYear()} Pickle &amp; Pan. All rights reserved.
         </p>
       </div>
     </footer>
