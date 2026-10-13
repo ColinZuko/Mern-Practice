@@ -44,8 +44,12 @@ export async function getPost(id) {
   const response = await axios.get(`${URL}/posts/${id}`);
 
   const post = response.data;
-  const data = await getImage(post.imageId);
-  post.image = data;
+  // A missing or broken image shouldn't stop the post itself from showing
+  try {
+    post.image = await getImage(post.imageId);
+  } catch (error) {
+    console.error("Failed to load post image:", error);
+  }
   return post;
 }
 

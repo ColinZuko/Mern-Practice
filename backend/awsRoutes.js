@@ -16,9 +16,10 @@ const s3Bucket = "colinblogstorage";
 
 const s3Client = new S3Client({
   region: "eu-north-1",
+  // Render still uses the older AWS_* names, local config.env uses MY_AWS_*; accept either
   credentials: {
-    accessKeyId: process.env.MY_AWS_ACCESS_KEY,
-    secretAccessKey: process.env.MY_AWS_SECRET_KEY,
+    accessKeyId: process.env.MY_AWS_ACCESS_KEY || process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.MY_AWS_SECRET_KEY || process.env.AWS_SECRET_KEY,
   },
 });
 
@@ -30,13 +31,19 @@ awsRoutes.route("/images/:id").get(async (request, response) => {
     Key: id,
   };
 
-  const data = await s3Client.send(new GetObjectCommand(bucketParams));
+  try {
+    const data = await s3Client.send(new GetObjectCommand(bucketParams));
 
-  const contenttype = data.ContentType;
-  const srcString = await data.Body.transformToString("base64");
-  const imageSource = `data:${contenttype};base64,${srcString}`;
+    const contenttype = data.ContentType;
+    const srcString = await data.Body.transformToString("base64");
+    const imageSource = `data:${contenttype};base64,${srcString}`;
 
-  response.json({ imageSource });
+    response.json({ imageSource });
+  } catch (error) {
+    console.error("Error fetching image from S3:", error);
+    const status = error.name === "NoSuchKey" ? 404 : 500;
+    response.status(status).json({ message: "Could not load image" });
+  }
 });
 
 //#2 - Create an image
