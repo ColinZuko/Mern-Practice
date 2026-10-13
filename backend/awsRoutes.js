@@ -2,7 +2,7 @@ const express = require("express");
 const database = require("./connect");
 const ObjectId = require("mongodb").ObjectId;
 const jwt = require("jsonwebtoken");
-require("dotenv").config({ path: "./config.env" });
+require("dotenv").config({ path: require("path").join(__dirname, "config.env") });
 
 const {
   S3Client,
@@ -22,8 +22,8 @@ const s3Client = new S3Client({
   },
 });
 
-//#1 - Retrieve an image
-awsRoutes.route("/images/:id").get(verifyToken, async (request, response) => {
+//#1 - Retrieve an image - public so guests can see post images
+awsRoutes.route("/images/:id").get(async (request, response) => {
   const id = request.params.id;
   const bucketParams = {
     Bucket: s3Bucket,

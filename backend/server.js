@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: require("path").join(__dirname, "config.env") });
 const connect = require("./connect");
 const express = require("express");
 const cors = require("cors");
@@ -43,5 +43,13 @@ app.use((req, res, next) => {
 app.use(posts);
 app.use(users);
 app.use(awsRoutes);
+
+// Vercel imports the app as a serverless function; everywhere else (Render, local) we need a listening server
+if (!process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server is running on port: ${PORT}`);
+  });
+}
 
 module.exports = app;

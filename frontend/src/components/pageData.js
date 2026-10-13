@@ -10,11 +10,13 @@ export const pageData = [
   {
     name: "Create Blog",
     path: "/createblog",
+    requiresAuth: true,
   },
 
   {
     name: "Profile",
     path: "/profile",
+    requiresAuth: true,
   },
 
   {

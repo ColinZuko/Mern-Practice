@@ -1,9 +1,10 @@
 import axios from "axios";
+import { getToken } from "./auth";
 
 const URL = import.meta.env.VITE_API_URL || "";
 
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -88,12 +89,17 @@ export async function updateUser(id, user) {
   return response;
 }
 
+// Returns { token } on success or { error } with a message to show the user
 export async function verifyUser(user) {
-  const response = await axios.post(`${URL}/users/login`, user);
-  if (response.data.success) {
-    return response.data.token;
-  } else {
-    return;
+  try {
+    const response = await axios.post(`${URL}/users/login`, user);
+    if (response.data.success) {
+      return { token: response.data.token };
+    }
+    return { error: response.data.message || "Invalid email or password" };
+  } catch (error) {
+    console.error("Login request failed:", error);
+    return { error: "Can't reach the server right now. Please try again later." };
   }
 }
 

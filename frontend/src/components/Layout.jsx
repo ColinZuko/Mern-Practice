@@ -1,18 +1,8 @@
 import { Navbar } from "./Navbar"
-import { Outlet, useNavigate } from "react-router-dom"
-import { use, useEffect } from "react";
+import { Outlet } from "react-router-dom"
 
 
 export function Layout() {
-
-    let user = sessionStorage.getItem("User");
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (!user) {
-            navigate("/");
-        }
-    }, [user, navigate]);
 
     return (
         <>

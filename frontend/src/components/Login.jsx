@@ -1,7 +1,7 @@
 import { verifyUser } from "../api";
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { saveToken } from "../auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -11,6 +11,9 @@ export function Login() {
     password: "",
   });
 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
 
   function handleChange(e) {
@@ -19,14 +22,16 @@ export function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    let response = await verifyUser(user);
+    setErrorMessage("");
+    setIsSubmitting(true);
+    const { token, error } = await verifyUser(user);
+    setIsSubmitting(false);
 
-    if (response) {
+    if (token) {
+      saveToken(token);
       navigate("/home");
-      sessionStorage.setItem("User", response);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${response}`;
     } else {
-      alert("Login failed");
+      setErrorMessage(error);
     }
   }
 
@@ -51,10 +56,16 @@ export function Login() {
       />
       <Button
         type="submit"
+        disabled={isSubmitting}
         className="mb-2 hover:cursor-pointer bg-primary text-primary-foreground"
       >
-        Login
+        {isSubmitting ? "Logging in..." : "Login"}
       </Button>
+      {errorMessage && (
+        <p className="text-red-500 text-center mb-2 font-medium">
+          {errorMessage}
+        </p>
+      )}
     </form>
   );
 }

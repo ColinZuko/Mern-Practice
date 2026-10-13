@@ -2,6 +2,7 @@ import { CreateUser } from "../components/CreateUser";
 import { Login } from "../components/Login";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export function Landing() {
   //view == 0 -> login
@@ -31,6 +32,12 @@ export function Landing() {
           </Button>
         </div>
       )}
+      <Link
+        to="/home"
+        className="absolute bottom-10 text-sm text-stone-500 hover:text-primary underline"
+      >
+        Continue browsing as a guest
+      </Link>
     </div>
   );
 }

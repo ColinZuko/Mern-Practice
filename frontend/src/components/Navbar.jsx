@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { pageData } from "./pageData";
+import { isLoggedIn } from "../auth";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -16,6 +17,14 @@ export function Navbar() {
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
+
+  // Re-evaluated on every navigation, so the menu updates after login/logout
+  useLocation();
+  const loggedIn = isLoggedIn();
+  const visiblePages = [
+    ...pageData.filter((page) => loggedIn || !page.requiresAuth),
+    ...(loggedIn ? [] : [{ name: "Login", path: "/login" }]),
+  ];
 
   return (
     <NavigationMenu className="bg-white fixed w-full top-0 left-0 h-24 z-50 max-w-none flex-col md:flex-row justify-between border-b border-base-100 px-6 md:px-12 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
@@ -42,7 +51,7 @@ export function Navbar() {
 
       {/* ======================================================= */}
       <NavigationMenuList className="hidden md:flex space-x-8 items-baseline">
-        {pageData.map((page) => {
+        {visiblePages.map((page) => {
           return (
             <NavigationMenuItem key={page.path}>
               <Link to={page.path} className="navItem">
@@ -66,7 +75,7 @@ export function Navbar() {
         }`}
       >
         <div className="flex flex-col px-6 py-6 space-y-4">
-          {pageData.map((page) => (
+          {visiblePages.map((page) => (
             <Link
               key={page.path}
               to={page.path}

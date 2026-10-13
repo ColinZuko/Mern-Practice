@@ -2,12 +2,12 @@ const express = require("express");
 const database = require("./connect");
 const ObjectId = require("mongodb").ObjectId;
 const jwt = require("jsonwebtoken");
-require("dotenv").config({ path: "./config.env" });
+require("dotenv").config({ path: require("path").join(__dirname, "config.env") });
 
 let postRoutes = express.Router();
 
-//#1 - Retrieve all posts (With Search & Plural Cuisine Filtering)
-postRoutes.route("/posts").get(verifyToken, async (request, response) => {
+//#1 - Retrieve all posts (With Search & Plural Cuisine Filtering) - public, guests can browse
+postRoutes.route("/posts").get(async (request, response) => {
   try {
     let db = database.getDb();
     let query = {};
@@ -32,10 +32,10 @@ postRoutes.route("/posts").get(verifyToken, async (request, response) => {
   }
 });
 
-//#1b - Retrieve top 6 trending/most viewed posts
+//#1b - Retrieve top 6 trending/most viewed posts - public
 postRoutes
   .route("/posts/trending")
-  .get(verifyToken, async (request, response) => {
+  .get(async (request, response) => {
     try {
       let db = database.getDb();
       let data = await db
@@ -65,8 +65,9 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
         ? request.body.cuisines
         : [],
       imageId: request.body.imageId,
-      author: request.body.author,
-      authorName: request.body.authorName,
+      // Take the author from the verified token, never from the request body, so nobody can post as someone else
+      author: request.user._id,
+      authorName: request.user.name,
       views: 0,
     };
     let data = await db.collection("posts").insertOne(mongoObject);
@@ -79,10 +80,10 @@ postRoutes.route("/posts").post(verifyToken, async (request, response) => {
   }
 });
 
-//#3b - Increment view count on a single post
+//#3b - Increment view count on a single post - public so guest views count too
 postRoutes
   .route("/posts/:id/view")
-  .patch(verifyToken, async (request, response) => {
+  .patch(async (request, response) => {
     try {
       let db = database.getDb();
       let data = await db
@@ -107,8 +108,8 @@ postRoutes
     }
   });
 
-//#2 - Retrieve a single post
-postRoutes.route("/posts/:id").get(verifyToken, async (request, response) => {
+//#2 - Retrieve a single post - public
+postRoutes.route("/posts/:id").get(async (request, response) => {
   try {
     let db = database.getDb();
     let data = await db

@@ -4,6 +4,7 @@ import { getPosts, deletePost } from "../api";
 import * as jwt_decode from "jwt-decode";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { logout } from "../auth";
 
 export function Profile() {
   const [posts, setPosts] = useState([]);
@@ -94,8 +95,8 @@ export function Profile() {
 
         <Button
           onClick={() => {
-            sessionStorage.removeItem("User");
-            window.location.reload();
+            logout();
+            navigate("/home");
           }}
           className="mt-6 border border-stone-200 bg-stone-50 hover:bg-red-50 text-stone-700 hover:text-red-600 font-medium rounded-xl text-xs px-4 py-2 transition-all duration-150 cursor-pointer"
         >
