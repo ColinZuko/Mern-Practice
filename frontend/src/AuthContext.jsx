@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getCurrentUser, getToken, logout as clearToken, saveToken } from "./auth";
 import { getMe, toggleSaved } from "./api";
 import { AuthContext } from "./useAuth";
@@ -44,6 +44,12 @@ export function AuthProvider({ children }) {
     setReady(true);
   }
 
+  // Reload the account from the server, e.g. after the email address is confirmed
+  const refresh = useCallback(async () => {
+    const account = await loadAccount();
+    if (account !== undefined) setUser(account);
+  }, []);
+
   function logout() {
     clearToken();
     setUser(null);
@@ -59,6 +65,8 @@ export function AuthProvider({ children }) {
     user,
     ready,
     isLoggedIn: !!user,
+    // Until the server answers, assume verified so the reminder banner doesn't flash
+    isVerified: !!user && user.emailVerified !== false,
     role,
     canWrite: !!user && (role === "editor" || role === "admin"),
     isAdmin: !!user && role === "admin",
@@ -67,6 +75,7 @@ export function AuthProvider({ children }) {
       !!user && (role === "admin" || (role === "editor" && post.author === user._id)),
     login,
     logout,
+    refresh,
     toggleSave,
   };
 

@@ -1,5 +1,6 @@
 import { Navbar } from "./Navbar"
 import { Footer } from "./Footer"
+import { VerifyBanner } from "./VerifyBanner"
 import { Outlet, useLocation } from "react-router-dom"
 import { useEffect } from "react";
 
@@ -16,6 +17,7 @@ export function Layout() {
         <div className="flex min-h-screen flex-col">
         <Navbar/>
         <main className="flex-1 pt-16 print:pt-0">
+            <VerifyBanner/>
             <Outlet/>
         </main>
         <Footer/>

@@ -109,6 +109,11 @@ export function Admin() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
                     {u.name} {isMe && <span className="text-xs text-muted-foreground">(you)</span>}
+                    {!u.emailVerified && (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                        Email not confirmed
+                      </span>
+                    )}
                   </p>
                   <p className="truncate text-sm text-muted-foreground">
                     {u.email} · joined {formatDate(u.joinDate)}
@@ -122,7 +127,8 @@ export function Admin() {
                   className="h-9 rounded-full border bg-background px-3 text-sm disabled:opacity-60 cursor-pointer"
                 >
                   {ROLE_OPTIONS.map((role) => (
-                    <option key={role} value={role}>
+                    // People need a confirmed email before they can be given publishing rights
+                    <option key={role} value={role} disabled={role !== "user" && !u.emailVerified}>
                       {ROLE_LABELS[role]}
                     </option>
                   ))}

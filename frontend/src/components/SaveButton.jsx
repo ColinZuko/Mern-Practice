@@ -5,14 +5,19 @@ import { useAuth } from "../useAuth";
 
 // Lets readers keep a recipe in their saved list; guests are asked to sign in
 export function SaveButton({ postId }) {
-  const { isLoggedIn, isSaved, toggleSave } = useAuth();
+  const { isLoggedIn, isVerified, isSaved, toggleSave } = useAuth();
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
   const navigate = useNavigate();
   const saved = isSaved(postId);
 
   async function handleClick() {
     if (!isLoggedIn) {
       navigate("/login");
+      return;
+    }
+    if (!isVerified) {
+      setNotice("Confirm your email address to save recipes. Check your inbox for the link.");
       return;
     }
     setBusy(true);
@@ -26,6 +31,7 @@ export function SaveButton({ postId }) {
   }
 
   return (
+    <>
     <button
       type="button"
       onClick={handleClick}
@@ -39,5 +45,7 @@ export function SaveButton({ postId }) {
       {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
       {saved ? "Saved" : "Save recipe"}
     </button>
+    {notice && <p className="basis-full text-sm text-muted-foreground">{notice}</p>}
+    </>
   );
 }

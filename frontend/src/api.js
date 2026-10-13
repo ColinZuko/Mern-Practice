@@ -111,6 +111,16 @@ export async function toggleSaved(postId) {
   return response.data.saved;
 }
 
+export async function verifyEmail(token) {
+  const response = await axios.post(`${URL}/users/verify-email`, { token });
+  return response.data;
+}
+
+export async function resendVerification() {
+  const response = await axios.post(`${URL}/users/me/resend-verification`);
+  return response.data;
+}
+
 export async function getUsers() {
   const response = await axios.get(`${URL}/users`);
   return response.data;

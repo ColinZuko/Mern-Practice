@@ -12,6 +12,7 @@ import { Profile } from "./pages/Profile";
 import { Author } from "./pages/Author";
 import { Admin } from "./pages/Admin";
 import { NotFound } from "./pages/NotFound";
+import { VerifyEmail } from "./pages/VerifyEmail";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/readblog/:id" element={<ReadBlog />} />
             <Route path="/author/:id" element={<Author />} />
             <Route path="/about" element={<About />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             {/* Old link to the recipes page */}
             <Route path="/contact" element={<Navigate to="/recipes" replace />} />
 

@@ -13,7 +13,7 @@ const ROLE_DESCRIPTIONS = {
 };
 
 export function Profile() {
-  const { user, role, canWrite, logout } = useAuth();
+  const { user, role, canWrite, isVerified, logout } = useAuth();
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +67,7 @@ export function Profile() {
           </div>
           <p className="text-sm text-muted-foreground">
             {user.email}
+            {!isVerified && <span className="font-medium text-amber-700"> (not confirmed yet)</span>}
             {user.joinDate && <> · Member since {formatDate(user.joinDate)}</>}
           </p>
           <p className="text-sm text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
