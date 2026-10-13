@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getUsers, setUserRole } from "../api";
+import { Trash2 } from "lucide-react";
+import { deleteUser, getUsers, setUserRole } from "../api";
 import { useAuth } from "../useAuth";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
 
@@ -38,6 +39,24 @@ export function Admin() {
     }
   }
 
+  async function handleRemove(target) {
+    const confirmed = window.confirm(
+      `Remove ${target.name} (${target.email})?
+
+` +
+        "Their account is deleted and they can no longer log in. " +
+        "Any recipes they published stay on the site under their name. This can't be undone.",
+    );
+    if (!confirmed) return;
+    try {
+      await deleteUser(target._id);
+      setUsers((list) => list.filter((u) => u._id !== target._id));
+      setMessage(`${target.name} has been removed.`);
+    } catch (error) {
+      setMessage(error.response?.data?.message || "Couldn't remove that user.");
+    }
+  }
+
   const term = filter.trim().toLowerCase();
   const visible = users.filter(
     (u) => !term || u.name?.toLowerCase().includes(term) || u.email?.toLowerCase().includes(term),
@@ -52,8 +71,8 @@ export function Admin() {
       <header className="border-b pb-8">
         <h1 className="text-4xl font-semibold">Manage users</h1>
         <p className="mt-2 text-muted-foreground">
-          Editors can publish recipes and manage their own posts. Admins can also edit any post
-          and change roles. New sign-ups start as readers.
+          Editors can publish recipes and manage their own posts. Admins can also edit any post,
+          change roles and remove accounts. New sign-ups start as readers.
         </p>
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           {ROLE_OPTIONS.map((role) => (
@@ -108,6 +127,16 @@ export function Admin() {
                     </option>
                   ))}
                 </select>
+                {!isMe && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(u)}
+                    title={`Remove ${u.name}`}
+                    className="inline-flex h-9 items-center gap-1.5 self-start rounded-full border border-destructive/30 px-3 text-sm font-medium text-destructive transition hover:bg-destructive/5 sm:self-auto cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" /> Remove
+                  </button>
+                )}
               </li>
             );
           })}

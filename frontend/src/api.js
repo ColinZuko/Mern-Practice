@@ -116,6 +116,11 @@ export async function getUsers() {
   return response.data;
 }
 
+export async function deleteUser(id) {
+  const response = await axios.delete(`${URL}/users/${id}`);
+  return response.data;
+}
+
 export async function setUserRole(id, role) {
   const response = await axios.patch(`${URL}/users/${id}/role`, { role });
   return response.data;

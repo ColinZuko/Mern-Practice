@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { getPosts, getTrendingPosts } from "../api";
 import { BlogCard } from "../components/BlogCard";
+import { HorizontalScroller } from "../components/HorizontalScroller";
 import { CUISINES } from "../lib/recipes";
 import { Logo } from "../components/Logo";
 
@@ -109,11 +110,11 @@ export function Home() {
       </section>
 
       {/* Browse by cuisine */}
-      <section className="border-y py-6">
-        <div className="flex items-center gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
-          <span className="shrink-0 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Browse
-          </span>
+      <section className="flex items-center gap-4 border-y py-5">
+        <span className="shrink-0 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Browse
+        </span>
+        <HorizontalScroller className="flex-1">
           {CUISINES.map((cuisine) => (
             <Link
               key={cuisine}
@@ -123,7 +124,7 @@ export function Home() {
               {cuisine}
             </Link>
           ))}
-        </div>
+        </HorizontalScroller>
       </section>
 
       {/* Latest */}

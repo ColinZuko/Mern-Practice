@@ -139,14 +139,36 @@ userRoutes.route("/users/:id/role").patch(requireRole("admin"), async (request, 
     response.json({ success: true, role });
 });
 
-//#5 - Delete a user (only your own account)
+//#5 - Delete a user: your own account, or anyone's if you're an admin.
+// Their recipes stay published under their name; admins can remove those separately.
 userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => {
-    if (request.user._id !== request.params.id) {
-        return response.status(403).json({ message: "Unauthorized to delete this user" });
+    if (!ObjectId.isValid(request.params.id) || !ObjectId.isValid(request.user._id)) {
+        return response.status(400).json({ message: "Invalid user ID format" });
     }
     let db = database.getDb();
-    let data = await db.collection("users").deleteOne({ _id: new ObjectId(request.params.id)});
-    response.json(data);
+    const users = db.collection("users");
+    const isSelf = request.user._id === request.params.id;
+
+    // Check the role in the database, not the token, so a demoted admin can't still delete people
+    const requester = await users.findOne({ _id: new ObjectId(request.user._id) }, { projection: { role: 1 } });
+    if (!requester) {
+        return response.status(401).json({ message: "Account no longer exists" });
+    }
+    if (!isSelf && requester.role !== "admin") {
+        return response.status(403).json({ message: "Unauthorized to delete this user" });
+    }
+
+    const target = await users.findOne({ _id: new ObjectId(request.params.id) }, { projection: { role: 1 } });
+    if (!target) {
+        return response.status(404).json({ message: "User not found" });
+    }
+    // Never remove the last admin, or nobody could manage the site any more
+    if (target.role === "admin" && (await users.countDocuments({ role: "admin" })) <= 1) {
+        return response.status(400).json({ message: "You can't remove the only admin" });
+    }
+
+    let data = await users.deleteOne({ _id: target._id });
+    response.json({ success: true, deletedCount: data.deletedCount });
 });
 
 //6 - Login

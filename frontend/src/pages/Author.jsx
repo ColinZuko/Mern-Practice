@@ -12,17 +12,22 @@ export function Author() {
 
   useEffect(() => {
     async function load() {
-      try {
-        const [profile, authored] = await Promise.all([
-          getAuthor(id),
-          getPosts({ author: id }),
-        ]);
-        setAuthor(profile);
-        setPosts(authored);
-      } catch (error) {
-        console.error("Failed to load author:", error);
+      const [profile, authored] = await Promise.allSettled([
+        getAuthor(id),
+        getPosts({ author: id }),
+      ]);
+      const authoredPosts = authored.status === "fulfilled" ? authored.value : [];
+
+      if (profile.status === "fulfilled") {
+        setAuthor(profile.value);
+      } else if (authoredPosts.length > 0) {
+        // The account was removed but their recipes are still published
+        setAuthor({ name: authoredPosts[0].authorName, removed: true });
+      } else {
+        console.error("Failed to load author:", profile.reason);
         setNotFound(true);
       }
+      setPosts(authoredPosts);
     }
     load();
   }, [id]);
@@ -50,8 +55,10 @@ export function Author() {
         </span>
         <h1 className="mt-5 text-4xl font-semibold">{author.name}</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {ROLE_LABELS[author.role]} · Member since {formatDate(author.joinDate)} ·{" "}
-          {posts.length} {posts.length === 1 ? "recipe" : "recipes"}
+          {author.removed
+            ? "Former contributor"
+            : `${ROLE_LABELS[author.role]} · Member since ${formatDate(author.joinDate)}`}{" "}
+          · {posts.length} {posts.length === 1 ? "recipe" : "recipes"}
         </p>
       </header>
 
