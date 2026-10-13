@@ -1,10 +1,79 @@
 import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { deleteUser, getUsers, setUserRole } from "../api";
+import { DatabaseBackup, Trash2 } from "lucide-react";
+import { createBackupNow, deleteUser, getBackups, getUsers, setUserRole } from "../api";
 import { useAuth } from "../useAuth";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
 
 const ROLE_OPTIONS = ["user", "editor", "admin"];
+
+function BackupsPanel() {
+  const [backups, setBackups] = useState(null);
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    getBackups()
+      .then(setBackups)
+      .catch(() => setStatus("Couldn't load the backups."));
+  }, []);
+
+  async function handleBackupNow() {
+    setBusy(true);
+    setStatus("");
+    try {
+      await createBackupNow();
+      setBackups(await getBackups());
+      setStatus("Backup saved.");
+    } catch (error) {
+      setStatus(error.response?.data?.message || "The backup failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const latest = backups?.[0];
+  const hoursAgo = latest ? (Date.now() - new Date(latest.lastModified).getTime()) / 36e5 : null;
+
+  return (
+    <section className="mt-12 rounded-2xl border bg-card p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-xl font-semibold">
+            <DatabaseBackup className="h-5 w-5 text-primary" /> Database backups
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            A copy of all recipes, accounts and comments is saved every day and kept for 30 days.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleBackupNow}
+          disabled={busy}
+          className="shrink-0 self-start rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted disabled:opacity-60 cursor-pointer"
+        >
+          {busy ? "Backing up…" : "Back up now"}
+        </button>
+      </div>
+
+      <div className="mt-5 text-sm">
+        {backups === null && !status && <p className="text-muted-foreground">Loading…</p>}
+        {backups && backups.length === 0 && (
+          <p className="font-medium text-amber-700">No backups yet. The first one is made shortly after the server starts.</p>
+        )}
+        {latest && (
+          <p className={hoursAgo > 26 ? "font-medium text-amber-700" : ""}>
+            Latest backup: {new Date(latest.lastModified).toLocaleString("en-GB")} ({Math.round(latest.size / 1024)} KB)
+            {hoursAgo > 26 && " — older than a day, check the server logs"}
+          </p>
+        )}
+        {backups && backups.length > 1 && (
+          <p className="mt-1 text-muted-foreground">{backups.length} recent backups stored.</p>
+        )}
+        {status && <p className="mt-2 font-medium">{status}</p>}
+      </div>
+    </section>
+  );
+}
 
 export function Admin() {
   const { user: me } = useAuth();
@@ -151,6 +220,8 @@ export function Admin() {
           )}
         </ul>
       )}
+
+      <BackupsPanel />
     </div>
   );
 }

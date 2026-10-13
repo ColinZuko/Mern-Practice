@@ -5,10 +5,29 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { ROLES, verifyToken, requireRole } = require('./auth');
 const { createVerificationToken, hashToken, sendVerificationEmail } = require('./email');
+const { loginLimiter, signupLimiter, verifyEmailLimiter } = require('./limits');
 require('dotenv').config({ path: require('path').join(__dirname, 'config.env') });
 
 let userRoutes = express.Router();
-const SALT_ROUNDS = 6;
+// 12 rounds is the current recommendation; older hashes (6 rounds) are upgraded at the next login
+const SALT_ROUNDS = 12;
+// Compared against when an email doesn't exist, so failed logins take the same time either way
+const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", SALT_ROUNDS);
+
+// Inputs must be plain strings: an object like { "$ne": null } would otherwise be run as a database query
+function cleanString(value, maxLength) {
+    return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Same rule as the sign-up form: 6+ characters with an uppercase letter, a number and a symbol
+function passwordProblem(password) {
+    if (typeof password !== "string" || password.length < 6) return "Password must be at least 6 characters";
+    if (password.length > 72) return "Password can be at most 72 characters";
+    if (!/[A-Z]/.test(password) || !/\d/.test(password) || !/[\W_]/.test(password)) {
+        return "Password must contain an uppercase letter, a number and a symbol";
+    }
+    return null;
+}
 
 // Never send password hashes or verification tokens back to the client
 const HIDE_PASSWORD = { projection: { password: 0, verifyTokenHash: 0, verifyTokenExpires: 0 } };
@@ -85,7 +104,7 @@ userRoutes.route("/users/me/saved/:postId").post(verifyToken, async (request, re
 });
 
 //#1d - Confirm an email address with the token from the verification link
-userRoutes.route("/users/verify-email").post(async (request, response) => {
+userRoutes.route("/users/verify-email").post(verifyEmailLimiter, async (request, response) => {
     const token = request.body.token;
     if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) {
         return response.status(400).json({ message: "This verification link is invalid." });
@@ -146,14 +165,23 @@ userRoutes.route("/users/:id").get(async (request, response) => {
 });
 
 //#3 - Create a user (everyone signs up as a reader; admins promote people to editor)
-userRoutes.route("/users").post(async (request, response) => {
+userRoutes.route("/users").post(signupLimiter, async (request, response) => {
     let db = database.getDb();
 
-    if (!request.body.email || !request.body.password || !request.body.name) {
+    const name = cleanString(request.body.name, 40);
+    const email = cleanString(request.body.email, 100);
+    if (!name || !email) {
         return response.status(400).json({ message: "Name, email and password are required" });
     }
+    if (!EMAIL_PATTERN.test(email)) {
+        return response.status(400).json({ message: "Please enter a valid email address" });
+    }
+    const problem = passwordProblem(request.body.password);
+    if (problem) {
+        return response.status(400).json({ message: problem });
+    }
 
-    const takenEmail = await db.collection("users").findOne({ email: request.body.email });
+    const takenEmail = await db.collection("users").findOne({ email });
 
     if (takenEmail) {
         response.status(400).json({ message: "Email is already in use" });
@@ -161,8 +189,8 @@ userRoutes.route("/users").post(async (request, response) => {
         const hash = await bcrypt.hash(request.body.password, SALT_ROUNDS);
 
         let mongoObject = {
-            name: request.body.name,
-            email: request.body.email,
+            name,
+            email,
             password: hash,
             joinDate: new Date(),
             role: "user",
@@ -189,15 +217,27 @@ userRoutes.route("/users/:id").put(verifyToken, async (request, response) => {
     }
 
     let changes = {};
-    if (request.body.name) changes.name = request.body.name;
-    const emailChanged = !!request.body.email && request.body.email !== current.email;
+    const name = cleanString(request.body.name, 40);
+    const email = cleanString(request.body.email, 100);
+    if (name) changes.name = name;
+    const emailChanged = !!email && email !== current.email;
     if (emailChanged) {
-        if (await db.collection("users").findOne({ email: request.body.email })) {
+        if (!EMAIL_PATTERN.test(email)) {
+            return response.status(400).json({ message: "Please enter a valid email address" });
+        }
+        if (await db.collection("users").findOne({ email })) {
             return response.status(400).json({ message: "Email is already in use" });
         }
-        changes.email = request.body.email;
+        changes.email = email;
     }
-    if (request.body.password) changes.password = await bcrypt.hash(request.body.password, SALT_ROUNDS);
+    if (request.body.password !== undefined) {
+        const problem = passwordProblem(request.body.password);
+        if (problem) return response.status(400).json({ message: problem });
+        changes.password = await bcrypt.hash(request.body.password, SALT_ROUNDS);
+    }
+    if (Object.keys(changes).length === 0) {
+        return response.status(400).json({ message: "Nothing to update" });
+    }
     let data = await db.collection("users").updateOne({ _id: userId }, { $set: changes });
 
     // A new email address has to be confirmed again
@@ -266,23 +306,33 @@ userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => 
 });
 
 //6 - Login
-userRoutes.route("/users/login").post(async (request, response) => {
+userRoutes.route("/users/login").post(loginLimiter, async (request, response) => {
     let db = database.getDb();
 
-    const user = await db.collection("users").findOne({ email: request.body.email });
+    const email = cleanString(request.body.email, 100);
+    const password = typeof request.body.password === "string" ? request.body.password : "";
+    const user = email ? await db.collection("users").findOne({ email }) : null;
+
+    // Always run a password check so failed logins take as long whether or not the email exists
+    const confirmation = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);
 
     if (user) {
-        let confirmation = await bcrypt.compare(request.body.password, user.password);
         if (confirmation) {
+            // Upgrade older, weaker password hashes now that we know the password
+            if (bcrypt.getRounds(user.password) < SALT_ROUNDS) {
+                const stronger = await bcrypt.hash(password, SALT_ROUNDS);
+                await db.collection("users").updateOne({ _id: user._id }, { $set: { password: stronger } });
+            }
                 // Only sign the fields you need, keeping the password hash out of the token
                 const token = jwt.sign( { _id: user._id, email: user.email, name: user.name, joinDate: user.joinDate, role: user.role || "user" } , process.env.SECRETKEY, { expiresIn: '1h' });
             response.json({ success: true, token });
         }else {
-            // Same message for both cases so the login form can't be used to discover which emails have accounts
-            response.json({ success: false, message: "Invalid email or password" });
+            // Same message for both cases so the login form can't be used to discover which emails have accounts.
+            // 401 also lets the rate limiter count this as a failed attempt.
+            response.status(401).json({ success: false, message: "Invalid email or password" });
         }
     }else{
-        response.json({ success: false, message: "Invalid email or password" });
+        response.status(401).json({ success: false, message: "Invalid email or password" });
     }
 
 });

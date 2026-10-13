@@ -17,7 +17,8 @@ function verifyToken(request, response, next) {
       .json({ message: "Authentication token is missing" });
   }
 
-  jwt.verify(token, process.env.SECRETKEY, (error, user) => {
+  // Only accept the algorithm we sign with
+  jwt.verify(token, process.env.SECRETKEY, { algorithms: ["HS256"] }, (error, user) => {
     if (error) {
       return response
         .status(403)

@@ -144,6 +144,16 @@ export async function resendVerification() {
   return response.data;
 }
 
+export async function getBackups() {
+  const response = await axios.get(`${URL}/admin/backups`);
+  return response.data;
+}
+
+export async function createBackupNow() {
+  const response = await axios.post(`${URL}/admin/backups`);
+  return response.data;
+}
+
 export async function getUsers() {
   const response = await axios.get(`${URL}/users`);
   return response.data;
@@ -173,6 +183,10 @@ export async function verifyUser(user) {
     }
     return { error: response.data.message || "Invalid email or password" };
   } catch (error) {
+    // Wrong password (401) or too many attempts (429) come with a message to show
+    if (error.response?.data?.message) {
+      return { error: error.response.data.message };
+    }
     console.error("Login request failed:", error);
     return { error: "Can't reach the server right now. Please try again later." };
   }
