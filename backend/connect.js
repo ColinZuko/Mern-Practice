@@ -16,7 +16,7 @@ let database;
 
 module.exports = {
   connectToServer: () => {
-    database = client.db("BlogData")
+    database = client.db(process.env.DB_NAME || "BlogData")
   },
   getDb: () => {
     return database;

@@ -11,60 +11,65 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-// NEW: Fetch top 6 trending/most viewed posts
-export async function getTrendingPosts() {
-  const response = await axios.get(`${URL}/posts/trending`);
-
-  if (response.status === 200) {
-    return response.data;
-  } else {
-    return []; // Return clean empty fallback array on failure
-  }
+// Direct link to a post's image; the browser loads and caches it like any normal image
+export function imageUrl(imageId) {
+  if (!imageId) return null;
+  return `${URL}/images/${encodeURIComponent(imageId)}/raw`;
 }
 
-export async function getPosts(searchQuery = "", cuisineFilter = "") {
-  let url = `${URL}/posts?`;
-  if (searchQuery) {
-    url += `search=${encodeURIComponent(searchQuery)}&`;
-  }
-  if (cuisineFilter) {
-    url += `cuisine=${encodeURIComponent(cuisineFilter)}&`;
-  }
+// ---- Posts ----
 
-  const response = await axios.get(url);
+export async function getTrendingPosts() {
+  const response = await axios.get(`${URL}/posts/trending`);
+  return response.data || [];
+}
 
-  if (response.status === 200) {
-    return response.data;
-  } else {
-    return;
-  }
+export async function getPosts({ search = "", cuisine = "", author = "" } = {}) {
+  const params = {};
+  if (search) params.search = search;
+  if (cuisine) params.cuisine = cuisine;
+  if (author) params.author = author;
+
+  const response = await axios.get(`${URL}/posts`, { params });
+  return response.data || [];
 }
 
 export async function getPost(id) {
   const response = await axios.get(`${URL}/posts/${id}`);
+  return response.data;
+}
 
-  const post = response.data;
-  // A missing or broken image shouldn't stop the post itself from showing
+export async function logView(id) {
   try {
-    post.image = await getImage(post.imageId);
+    await axios.patch(`${URL}/posts/${id}/view`);
   } catch (error) {
-    console.error("Failed to load post image:", error);
+    console.error("Failed to record view:", error);
   }
-  return post;
 }
 
 export async function createPost(post) {
-  const data = await createImage(post.file);
-  const imageId = post.file.name;
-
-  post.imageId = imageId;
-
-  const response = await axios.post(`${URL}/posts`, post);
+  const imageId = await uploadImage(post.file);
+  const response = await axios.post(`${URL}/posts`, {
+    title: post.title,
+    description: post.description,
+    content: post.content,
+    cuisines: post.cuisines,
+    imageId,
+  });
   return response;
 }
 
-export async function updatePost(id, updatedData) {
-  const response = await axios.put(`${URL}/posts/${id}`, updatedData);
+export async function updatePost(id, post) {
+  const changes = {
+    title: post.title,
+    description: post.description,
+    content: post.content,
+    cuisines: post.cuisines,
+  };
+  // Only upload when the editor picked a new cover image
+  if (post.file) changes.imageId = await uploadImage(post.file);
+
+  const response = await axios.put(`${URL}/posts/${id}`, changes);
   return response;
 }
 
@@ -73,23 +78,49 @@ export async function deletePost(id) {
   return response;
 }
 
-export async function getUser(id) {
-  const response = await axios.get(`${URL}/users/${id}`);
+// ---- Images ----
 
-  if (response.status === 200) {
-    return response.data;
-  } else {
-    return;
-  }
+// Uploads the file and returns the key the server stored it under
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append("image", file);
+  const response = await axios.post(`${URL}/images`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data.key;
+}
+
+// ---- Users ----
+
+export async function getAuthor(id) {
+  const response = await axios.get(`${URL}/users/${id}`);
+  return response.data;
+}
+
+export async function getMe() {
+  const response = await axios.get(`${URL}/users/me`);
+  return response.data;
+}
+
+export async function toggleSaved(postId) {
+  const response = await axios.post(`${URL}/users/me/saved/${postId}`);
+  return response.data.saved;
+}
+
+export async function getUsers() {
+  const response = await axios.get(`${URL}/users`);
+  return response.data;
+}
+
+export async function setUserRole(id, role) {
+  const response = await axios.patch(`${URL}/users/${id}/role`, { role });
+  return response.data;
 }
 
 export async function createUser(user) {
   const response = await axios.post(`${URL}/users`, user);
-  return response;
-}
-
-export async function updateUser(id, user) {
-  const response = await axios.put(`${URL}/users/${id}`, user);
   return response;
 }
 
@@ -105,20 +136,4 @@ export async function verifyUser(user) {
     console.error("Login request failed:", error);
     return { error: "Can't reach the server right now. Please try again later." };
   }
-}
-
-export async function createImage(file) {
-  const formData = new FormData();
-  formData.append("image", file);
-  const response = await axios.post(`${URL}/images`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return response;
-}
-
-export async function getImage(id) {
-  const response = await axios.get(`${URL}/images/${id}`);
-  return response;
 }

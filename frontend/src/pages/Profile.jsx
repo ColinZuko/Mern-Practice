@@ -1,155 +1,143 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
+import { deletePost, getPosts } from "../api";
+import { useAuth } from "../useAuth";
 import { BlogCard } from "../components/BlogCard";
-import { useState, useEffect } from "react";
-import { getPosts, deletePost } from "../api";
-import * as jwt_decode from "jwt-decode";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { logout } from "../auth";
+import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
+
+const ROLE_DESCRIPTIONS = {
+  admin: "You can write recipes, edit or remove any post, and manage user roles.",
+  editor: "You can write recipes and edit or remove your own posts.",
+  user: "You can save recipes to come back to. Only editors can publish recipes.",
+};
 
 export function Profile() {
-  const [posts, setPosts] = useState([]);
-  const [user, setUser] = useState({});
-
+  const { user, role, canWrite, logout } = useAuth();
   const navigate = useNavigate();
-
-  const handleDelete = async (postId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this post?",
-    );
-    if (!confirmDelete) {
-      return;
-    }
-    try {
-      const response = await deletePost(postId);
-      if (response.status === 200) {
-        // Remove the deleted post from the state
-        setPosts((prevPosts) =>
-          prevPosts.filter((post) => post._id !== postId),
-        );
-      }
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      alert("Failed to delete the post. Please try again.");
-    }
-  };
+  const [allPosts, setAllPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadUserData() {
-      const token = sessionStorage.getItem("User");
-      const decodedUser = jwt_decode.jwtDecode(token);
-      const allPosts = await getPosts();
-      const filteredPosts = allPosts.filter(
-        (post) => post.author == decodedUser._id,
-      );
-      filteredPosts.sort((a, b) => {
-        return (
-          new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime()
-        );
-      });
-      setPosts(filteredPosts);
-      setUser(decodedUser);
+    async function load() {
+      try {
+        setAllPosts(await getPosts());
+      } catch (error) {
+        console.error("Failed to load posts:", error);
+      } finally {
+        setLoading(false);
+      }
     }
-    loadUserData();
+    load();
   }, []);
 
-  console.log(user);
+  const savedIds = user.saved || [];
+  const saved = allPosts.filter((post) => savedIds.includes(post._id));
+  const mine = allPosts.filter((post) => post.author === user._id);
+
+  async function handleDelete(postId) {
+    if (!window.confirm("Delete this recipe? This can't be undone.")) return;
+    try {
+      await deletePost(postId);
+      setAllPosts((posts) => posts.filter((post) => post._id !== postId));
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete the recipe. Please try again.");
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/home");
+  }
 
   return (
-    <div className="flex flex-col items-center w-[90vw] max-w-[1500px] mt-24 px-4 pb-20 space-y-12 mx-auto antialiased text-stone-900">
-      {/* PROFILE INFORMATION SECTION */}
-      <div className="flex flex-col items-start w-full lg:w-[50vw] bg-white border border-stone-200/60 rounded-3xl p-6 shadow-sm">
-        <span className="text-xs font-bold uppercase tracking-widest text-primary mb-4">
-          Your Profile
+    <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      {/* Account summary */}
+      <header className="flex flex-col gap-6 border-b pb-10 sm:flex-row sm:items-center">
+        <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif text-3xl font-semibold text-primary">
+          {initials(user.name)}
         </span>
-
-        <div className="space-y-4 w-full">
-          <div className="border-b border-stone-100 pb-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
-              Name
-            </label>
-            <h2 className="scroll-m-20 text-xl font-bold tracking-tight text-balance text-primary">
-              {user.name}
-            </h2>
+        <div className="flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-3xl font-semibold sm:text-4xl">{user.name}</h1>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {ROLE_LABELS[role]}
+            </span>
           </div>
-
-          <div className="border-b border-stone-100 pb-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
-              Email Address
-            </label>
-            <h2 className="scroll-m-20 text-xl font-bold tracking-tight text-balance text-primary">
-              {user.email}
-            </h2>
-          </div>
-
-          <div className="pb-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-400">
-              Member Since
-            </label>
-            <h2 className="text-sm text-stone-500 mt-0.5">
-              {user.joinDate
-                ? new Date(user.joinDate).toString().slice(4, 15)
-                : "N/A"}
-            </h2>
-          </div>
-        </div>
-
-        <Button
-          onClick={() => {
-            logout();
-            navigate("/home");
-          }}
-          className="mt-6 border border-stone-200 bg-stone-50 hover:bg-red-50 text-stone-700 hover:text-red-600 font-medium rounded-xl text-xs px-4 py-2 transition-all duration-150 cursor-pointer"
-        >
-          Log Out
-        </Button>
-      </div>
-
-      {/* USER'S POSTS MANAGEMENT SECTION */}
-      <div className="w-full space-y-6">
-        <div className="border-b border-stone-200 pb-2">
-          <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-balance text-primary">
-            Your Published Recipes
-          </h2>
-          <p className="text-sm text-primary/80">
-            Manage or permanently remove your content from the feed.
+          <p className="text-sm text-muted-foreground">
+            {user.email}
+            {user.joinDate && <> · Member since {formatDate(user.joinDate)}</>}
           </p>
+          <p className="text-sm text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="self-start rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted sm:self-center cursor-pointer"
+        >
+          Log out
+        </button>
+      </header>
 
-        {posts.length === 0 ? (
-          <p className="text-stone-500 text-sm italic py-4">
-            You haven't posted any recipes yet.
+      {/* Published recipes (editors and admins) */}
+      {canWrite && (
+        <section className="pt-12">
+          <div className="mb-8 flex items-end justify-between border-b pb-3">
+            <h2 className="text-2xl font-semibold sm:text-3xl">Your recipes</h2>
+            <Link to="/createblog" className="text-sm font-medium text-primary hover:underline">
+              Write a new recipe
+            </Link>
+          </div>
+          {loading ? (
+            <p className="text-muted-foreground">Loading…</p>
+          ) : mine.length === 0 ? (
+            <p className="text-muted-foreground">You haven't published any recipes yet.</p>
+          ) : (
+            <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+              {mine.map((post) => (
+                <div key={post._id} className="flex flex-col">
+                  <BlogCard post={post} />
+                  <div className="mt-4 flex gap-2 border-t pt-4">
+                    <Link
+                      to={`/edit-post/${post._id}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> Edit
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(post._id)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5 cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Saved recipes */}
+      <section className="pt-12">
+        <h2 className="mb-8 border-b pb-3 text-2xl font-semibold sm:text-3xl">Saved recipes</h2>
+        {loading ? (
+          <p className="text-muted-foreground">Loading…</p>
+        ) : saved.length === 0 ? (
+          <p className="text-muted-foreground">
+            Nothing saved yet. Use the <span className="font-medium">Save recipe</span> button on
+            any recipe to keep it here.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-            {posts.map((post) => (
-              <div
-                key={post._id}
-                className="flex flex-col w-full bg-white border border-stone-200/60 rounded-2xl p-4 shadow-sm space-y-4"
-              >
-                {/* Recipe Card Body Container */}
-                <div className="w-full">
-                  <BlogCard post={post} />
-                </div>
-                <div className="flex justify-end gap-2 pt-2 border-t border-stone-100">
-                  {/* Edit and Delete Buttons */}
-                  <Button
-                    onClick={() => navigate(`/edit-post/${post._id}`)}
-                    className="bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 font-semibold text-xs px-4 py-2 rounded-xl transition duration-150 cursor-pointer"
-                  >
-                    Edit Recipe
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(post._id)}
-                    className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-semibold text-xs px-4 py-2 rounded-xl transition duration-150 cursor-pointer"
-                  >
-                    Delete Recipe
-                  </Button>
-                </div>
-              </div>
+          <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {saved.map((post) => (
+              <BlogCard key={post._id} post={post} />
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

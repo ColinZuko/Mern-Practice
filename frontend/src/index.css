@@ -2,13 +2,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/fraunces";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
     /* Fonts */
-    --font-heading: var(--font-sans);
+    --font-heading: var(--font-serif);
     --font-sans: 'Geist Variable', sans-serif;
+    --font-serif: 'Fraunces Variable', Georgia, serif;
 
     /* Theme Color Mapping */
     --color-background: var(--background);
@@ -52,30 +54,31 @@
 
 :root {
     /* Validated functional OKLCH definitions for v4 Engine */
-    --background: oklch(0.96 0.002 240); 
-    --foreground: oklch(0.27 0.002 240); 
+    /* Warm "paper" background with near-black ink, like a printed food magazine */
+    --background: oklch(0.985 0.005 85);
+    --foreground: oklch(0.22 0.01 60);
     
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.27 0.002 240);
+    --card-foreground: oklch(0.22 0.01 60);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.27 0.002 240);
+    --popover-foreground: oklch(0.22 0.01 60);
 
     --primary: oklch(0.32 0.091 343); 
     --primary-foreground: oklch(0.98 0.005 343); 
 
-    --secondary: oklch(0.93 0.005 240); 
-    --secondary-foreground: oklch(0.27 0.002 240);
+    --secondary: oklch(0.955 0.012 80);
+    --secondary-foreground: oklch(0.22 0.01 60);
     
-    --muted: oklch(0.93 0.005 240);
-    --muted-foreground: oklch(0.55 0.01 240);
+    --muted: oklch(0.955 0.012 80);
+    --muted-foreground: oklch(0.5 0.015 60);
 
     --accent: oklch(0.42 0.118 345);
     --accent-foreground: oklch(1 0 0);
 
     --destructive: oklch(0.577 0.245 27.325);
 
-    --border: oklch(0.88 0.005 240);
-    --input: oklch(0.88 0.005 240);
+    --border: oklch(0.9 0.01 80);
+    --input: oklch(0.88 0.01 80);
     --ring: oklch(0.32 0.091 343); 
 
     --radius: 0.625rem;
@@ -118,4 +121,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+@layer base {
+  h1, h2, h3, .font-serif {
+    font-family: var(--font-serif);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Long-form recipe text */
+@utility article-body {
+  font-size: 1.125rem;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

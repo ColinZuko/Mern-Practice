@@ -1,19 +1,23 @@
 import { verifyUser } from "../api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { saveToken } from "../auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useAuth } from "../useAuth";
+
+export const authLabelClass = "block text-sm font-medium";
+export const authInputClass =
+  "mt-1.5 h-11 w-full rounded-xl border bg-card px-4 outline-none transition focus:ring-2 focus:ring-ring/30";
+export const authButtonClass =
+  "h-11 w-full rounded-full bg-primary text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60 cursor-pointer";
 
 export function Login() {
   const [user, setUser] = useState({
     email: "",
     password: "",
   });
-
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   function handleChange(e) {
@@ -28,7 +32,7 @@ export function Login() {
     setIsSubmitting(false);
 
     if (token) {
-      saveToken(token);
+      await login(token);
       navigate("/home");
     } else {
       setErrorMessage(error);
@@ -36,36 +40,39 @@ export function Login() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col">
-      <Input
-        placeholder={"Email"}
-        onChange={handleChange}
-        name="email"
-        required
-        maxLength={50}
-        className="mb-1"
-      />
-      <Input
-        placeholder={"Password"}
-        onChange={handleChange}
-        name="password"
-        type="password"
-        required
-        maxLength={20}
-        className="mb-4"
-      />
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="mb-2 hover:cursor-pointer bg-primary text-primary-foreground"
-      >
-        {isSubmitting ? "Logging in..." : "Login"}
-      </Button>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="login-email" className={authLabelClass}>Email</label>
+        <input
+          id="login-email"
+          type="email"
+          onChange={handleChange}
+          name="email"
+          autoComplete="email"
+          required
+          maxLength={50}
+          className={authInputClass}
+        />
+      </div>
+      <div>
+        <label htmlFor="login-password" className={authLabelClass}>Password</label>
+        <input
+          id="login-password"
+          onChange={handleChange}
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          maxLength={20}
+          className={authInputClass}
+        />
+      </div>
       {errorMessage && (
-        <p className="text-red-500 text-center mb-2 font-medium">
-          {errorMessage}
-        </p>
+        <p className="text-sm font-medium text-destructive">{errorMessage}</p>
       )}
+      <button type="submit" disabled={isSubmitting} className={authButtonClass}>
+        {isSubmitting ? "Signing in…" : "Sign in"}
+      </button>
     </form>
   );
 }

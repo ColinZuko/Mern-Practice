@@ -1,150 +1,160 @@
-import { getPosts, getTrendingPosts } from "../api"; // Import both hooks
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+import { getPosts, getTrendingPosts } from "../api";
 import { BlogCard } from "../components/BlogCard";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
-import AutoScroll from "embla-carousel-auto-scroll";
+import { CUISINES } from "../lib/recipes";
+import logo from "../assets/Logo.png";
+
+function SectionHeading({ title, link, linkText }) {
+  return (
+    <div className="mb-8 flex items-end justify-between gap-4 border-b pb-3">
+      <h2 className="text-2xl font-semibold sm:text-3xl">{title}</h2>
+      {link && (
+        <Link
+          to={link}
+          className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
+        >
+          {linkText} <ArrowRight className="h-4 w-4" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="mx-auto grid max-w-7xl animate-pulse gap-10 px-4 py-10 sm:px-6 lg:grid-cols-12">
+      <div className="space-y-4 lg:col-span-8">
+        <div className="aspect-[16/10] rounded-2xl bg-muted" />
+        <div className="h-10 w-3/4 rounded bg-muted" />
+        <div className="h-5 w-1/2 rounded bg-muted" />
+      </div>
+      <div className="space-y-6 lg:col-span-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="h-20 rounded bg-muted" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function Home() {
   const [posts, setPosts] = useState([]);
-  const [trendingPosts, setTrendingPosts] = useState([]); // State for analytics data
+  const [trending, setTrending] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    async function loadAllPageData() {
+    async function loadPage() {
       try {
-        // 1. Load and sort your original posts array
-        const allData = await getPosts();
-        if (allData) {
-          allData.sort(
-            (a, b) => new Date(b.dateCreated) - new Date(a.dateCreated),
-          );
-          setPosts(allData);
-        }
-
-        // 2. Fetch the top 6 most-viewed posts from your new route
-        const trendingData = await getTrendingPosts();
-        if (trendingData) {
-          setTrendingPosts(trendingData);
-        }
+        const [allPosts, popular] = await Promise.all([
+          getPosts(),
+          getTrendingPosts(),
+        ]);
+        setPosts(allPosts);
+        setTrending(popular);
       } catch (error) {
-        console.error("Error loading home page collections:", error);
+        console.error("Error loading home page:", error);
+        setFailed(true);
+      } finally {
+        setLoading(false);
       }
     }
-    loadAllPageData();
+    loadPage();
   }, []);
 
+  if (loading) return <LoadingSkeleton />;
+
+  if (failed) {
+    return (
+      <p className="py-32 text-center text-muted-foreground">
+        We couldn't load the recipes right now. Please try again in a moment.
+      </p>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <p className="py-32 text-center text-muted-foreground">
+        No recipes have been published yet.
+      </p>
+    );
+  }
+
+  // Posts come back newest first
+  const [featured, ...rest] = posts;
+  const latest = rest.slice(0, 6);
+
   return (
-    <div className="max-w-[1500px] w-full mx-auto">
-      <div className="w-full mx-auto mt-24 px-4 sm:px-8 lg:px-12 space-y-16 md:space-y-24 pb-20">
-        {/* SECTION 1: LATEST POSTS */}
-        <section className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-balance text-primary">
-              Latest Recipe Posts
-            </h2>
-            <p className="text-sm text-primary/80">
-              The most recent recipes added to our collection.
-            </p>
-          </div>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      {/* Lead story + most popular */}
+      <section className="grid gap-12 py-10 lg:grid-cols-12 lg:py-14">
+        <div className="lg:col-span-8">
+          <BlogCard post={featured} variant="feature" />
+        </div>
 
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-              watchDrag: true,
-              dragFree: true,
-            }}
-            plugins={[
-              AutoScroll({
-                speed: 1,
-                stopOnInteraction: false,
-                stopOnMouseEnter: true,
-              }),
-            ]}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {posts.slice(0, 10).map((post) => (
-                <CarouselItem
-                  key={`latest-${post._id || post.id}`}
-                  className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
-                >
-                  <div className="h-full p-1">
-                    <BlogCard post={post} />
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
-        </section>
+        <aside className="lg:col-span-4 lg:border-l lg:pl-10">
+          <h2 className="mb-6 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Most popular
+          </h2>
+          <ol className="space-y-6">
+            {trending.slice(0, 5).map((post, i) => (
+              <li key={post._id} className="border-b pb-6 last:border-0">
+                <BlogCard post={post} variant="compact" rank={i + 1} />
+              </li>
+            ))}
+          </ol>
+        </aside>
+      </section>
 
-        {/* SECTION 2: MOST VIEWED/TRENDING */}
-        {trendingPosts.length > 0 && (
-          <section className="space-y-6 border-t border-stone-200/60 pt-16">
-            <div className="text-center space-y-2">
-              <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-balance text-primary">
-                Trending This Week
-              </h2>
-              <p className="text-sm text-primary/80">
-                The most viewed and cooked recipes by our community.
-              </p>
-            </div>
-
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-                watchDrag: true,
-                dragFree: true,
-              }}
-              plugins={[
-                AutoScroll({
-                  speed: 1.5, // Slightly faster speed to visually differentiate it
-                  stopOnInteraction: false,
-                  stopOnMouseEnter: true,
-                }),
-              ]}
-              className="w-full"
+      {/* Browse by cuisine */}
+      <section className="border-y py-6">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <span className="shrink-0 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Browse
+          </span>
+          {CUISINES.map((cuisine) => (
+            <Link
+              key={cuisine}
+              to={`/recipes?cuisine=${encodeURIComponent(cuisine.toLowerCase())}`}
+              className="shrink-0 rounded-full border bg-card px-4 py-1.5 text-sm transition hover:border-primary hover:text-primary"
             >
-              <CarouselContent className="-ml-4">
-                {trendingPosts.map((post) => (
-                  <CarouselItem
-                    key={`trending-${post._id || post.id}`}
-                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
-                  >
-                    <div className="h-full p-1">
-                      <BlogCard post={post} />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-            </Carousel>
-          </section>
-        )}
+              {cuisine}
+            </Link>
+          ))}
+        </div>
+      </section>
 
-        {/* SECTION 3: ALL POSTS GRID */}
-        <section className="space-y-6 border-t border-stone-200/60 pt-16">
-          <div className="text-center space-y-2">
-            <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-balance text-primary">
-              All Recipes
-            </h2>
-            <p className="text-sm text-primary/80">
-              Browse our entire collection of delicious recipes.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full">
-            {posts.map((post) => (
-              <div key={`grid-${post._id || post.id}`} className="h-full">
-                <BlogCard post={post} />
-              </div>
+      {/* Latest */}
+      {latest.length > 0 && (
+        <section className="pt-16">
+          <SectionHeading title="Latest recipes" link="/recipes" linkText="View all" />
+          <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {latest.map((post) => (
+              <BlogCard key={post._id} post={post} />
             ))}
           </div>
         </section>
-      </div>
+      )}
+
+      {/* About band */}
+      <section className="mt-20 grid items-center gap-8 rounded-3xl bg-primary px-8 py-12 text-primary-foreground sm:px-12 md:grid-cols-[auto_1fr]">
+        <img src={logo} alt="" className="h-24 w-24 rounded-full bg-white p-1" />
+        <div className="space-y-3">
+          <h2 className="text-3xl font-semibold">Cooking at home, written down.</h2>
+          <p className="max-w-2xl leading-relaxed text-primary-foreground/80">
+            ChefColin is a growing collection of tried-and-tested recipes from
+            our own kitchens. Create a free account to save your favourites.
+          </p>
+          <Link
+            to="/about"
+            className="inline-flex items-center gap-1 pt-1 text-sm font-semibold underline-offset-4 hover:underline"
+          >
+            Read our story <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,57 +1,197 @@
-import { getPost } from '../api';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { Button } from '../components/ui/button';
-import axios from 'axios'; // 1. Ensure axios is imported
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { Check, Clock, Eye, Link2, Pencil, Trash2 } from "lucide-react";
+import { deletePost, getPost, getPosts, logView } from "../api";
+import { useAuth } from "../useAuth";
+import { BlogCard, PostImage } from "../components/BlogCard";
+import { SaveButton } from "../components/SaveButton";
+import { cuisineLabel, formatDate, initials, readingTime } from "../lib/recipes";
 
 export function ReadBlog() {
-    const [post, setPost] = useState({});
-    let params = useParams();
-    const navigate = useNavigate();
-    let id = params.id;
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { canManage } = useAuth();
+  // Stored with the id it was loaded for, so an old recipe never shows while the next one loads
+  const [loaded, setLoaded] = useState({ id: null, post: null, related: [], notFound: false });
+  const [copied, setCopied] = useState(false);
+  const viewLogged = useRef(null);
 
-    useEffect(() => {
-        async function loadPost() {
-            let data = await getPost(id);
-            let date = new Date(data.dateCreated);
-            data.dateCreated = date.toString().slice(4, 15);
-            setPost(data);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const data = await getPost(id);
+        if (cancelled) return;
+        setLoaded({ id, post: data, related: [], notFound: false });
+
+        // "More like this": same first cuisine, falling back to the newest posts
+        const pool = await getPosts({ cuisine: data.cuisines?.[0] || "" });
+        const others = pool.filter((p) => p._id !== data._id);
+        const fallback = others.length >= 3 ? [] : (await getPosts()).filter(
+          (p) => p._id !== data._id && !others.some((o) => o._id === p._id),
+        );
+        if (!cancelled) {
+          setLoaded({ id, post: data, related: [...others, ...fallback].slice(0, 3), notFound: false });
         }
-
-        const URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
-        // 2. Add the dynamic logging engine here
-  async function logView() {
-    try {
-        // Uses your dynamic URL variable and lets the global interceptor handle the token automatically
-        await axios.patch(`${URL}/posts/${id}/view`);
-    } catch (err) {
-        console.error("Failed to update view analytics:", err);
+      } catch (error) {
+        console.error("Failed to load recipe:", error);
+        if (!cancelled) setLoaded({ id, post: null, related: [], notFound: true });
+      }
     }
-}
+    load();
 
-        loadPost();
-        logView(); // 3. Fire the execution runner
-    }, [id]);
+    // Count each visit once, even when React runs effects twice in development
+    if (viewLogged.current !== id) {
+      viewLogged.current = id;
+      logView(id);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
+  const current = loaded.id === id ? loaded : { post: null, related: [], notFound: false };
+  const { post, related, notFound } = current;
+
+  async function handleCopyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt("Copy this link:", window.location.href);
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm("Delete this recipe? This can't be undone.")) return;
+    try {
+      await deletePost(post._id);
+      navigate("/home");
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete the recipe. Please try again.");
+    }
+  }
+
+  if (notFound) {
     return (
-        <div className='flex flex-col items-center justify-center mt-15 mb-20 w-1/2 mx-auto'>
-            <Button onClick={() => navigate(-1)} className='mb-4 hover:cursor-pointer'>Back</Button>
-            <h1 className="scroll-m-20 text-center text-4xl font-extrabold tracking-tight text-balance mb-4">{post.title}</h1>
-            <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 mb-4">{post.description}</h2>
-            <div className='flex w-full justify-center my-4'>
-                {post.image?.data?.imageSource && (
-                    <img 
-                        src={post.image.data.imageSource.replace('application/octet-stream', 'image/png')} 
-                        alt="Blog cover" 
-                        className='max-h-[50vw] my-4 rounded-md shadow-md'
-                    />
-                )}
-            </div>
-
-            <h3 className="scroll-m-20 border-b pb-2 text-xl font-semibold tracking-tight first:mt-0">{post.dateCreated}</h3>
-            <p className="text-muted-foreground font-medium">By {post.authorName || "Unknown Author"}</p>
-            <p className="leading-7 [&:not(:first-child)]:mt-6 whitespace-pre-wrap text-left w-full">{post.content}</p>
-        </div>
+      <div className="py-32 text-center">
+        <p className="font-serif text-3xl">Recipe not found</p>
+        <Link to="/recipes" className="mt-4 inline-block text-primary hover:underline">
+          Browse all recipes
+        </Link>
+      </div>
     );
+  }
+
+  if (!post) {
+    return (
+      <div className="mx-auto max-w-3xl animate-pulse space-y-4 px-4 py-16">
+        <div className="h-4 w-24 rounded bg-muted" />
+        <div className="h-12 w-full rounded bg-muted" />
+        <div className="h-6 w-2/3 rounded bg-muted" />
+        <div className="mt-10 aspect-[16/9] rounded-2xl bg-muted" />
+      </div>
+    );
+  }
+
+  return (
+    <article className="pb-8">
+      <header className="mx-auto max-w-3xl px-4 pt-12 text-center sm:px-6 sm:pt-16">
+        <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
+          {post.cuisines?.map((tag) => (
+            <Link
+              key={tag}
+              to={`/recipes?cuisine=${encodeURIComponent(tag)}`}
+              className="text-xs font-semibold uppercase tracking-widest text-primary hover:underline"
+            >
+              {cuisineLabel(tag)}
+            </Link>
+          ))}
+        </div>
+
+        <h1 className="mt-4 text-4xl font-semibold leading-tight text-balance sm:text-5xl lg:text-6xl">
+          {post.title}
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
+          {post.description}
+        </p>
+
+        <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Link to={`/author/${post.author}`} className="flex items-center gap-3 text-left">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+              {initials(post.authorName)}
+            </span>
+            <span>
+              <span className="block text-sm font-medium hover:text-primary">
+                {post.authorName || "Unknown author"}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {formatDate(post.dateCreated)}
+              </span>
+            </span>
+          </Link>
+          <span className="hidden h-8 border-l sm:block" />
+          <span className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" /> {readingTime(post.content)} min read
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="h-3.5 w-3.5" /> {post.views || 0} views
+            </span>
+          </span>
+        </div>
+
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <SaveButton postId={post._id} />
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted cursor-pointer"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+            {copied ? "Link copied" : "Copy link"}
+          </button>
+          {canManage(post) && (
+            <>
+              <Link
+                to={`/edit-post/${post._id}`}
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+              >
+                <Pencil className="h-4 w-4" /> Edit
+              </Link>
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="inline-flex items-center gap-2 rounded-full border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/5 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </button>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div className="mx-auto mt-10 max-w-5xl px-4 sm:px-6">
+        <PostImage post={post} eager className="aspect-[16/9] w-full rounded-2xl" />
+      </div>
+
+      <div className="mx-auto mt-12 max-w-[68ch] px-4 sm:px-6">
+        <div className="article-body">{post.content}</div>
+      </div>
+
+      {related.length > 0 && (
+        <section className="mx-auto mt-24 max-w-7xl px-4 sm:px-6">
+          <h2 className="mb-8 border-b pb-3 text-2xl font-semibold sm:text-3xl">More like this</h2>
+          <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((p) => (
+              <BlogCard key={p._id} post={p} />
+            ))}
+          </div>
+        </section>
+      )}
+    </article>
+  );
 }

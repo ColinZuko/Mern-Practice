@@ -1,92 +1,217 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { pageData } from "./pageData";
-import { isLoggedIn } from "../auth";
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
-import { Menu, X } from "lucide-react"; // Icons for mobile toggle menu
+  Bookmark,
+  ChevronDown,
+  LogOut,
+  Menu,
+  Search,
+  SquarePen,
+  Users,
+  X,
+} from "lucide-react";
 import logo from "../assets/Logo.png";
+import { useAuth } from "../useAuth";
+import { initials, ROLE_LABELS } from "../lib/recipes";
+
+const NAV_LINKS = [
+  { name: "Home", path: "/home" },
+  { name: "Recipes", path: "/recipes" },
+  { name: "About", path: "/about" },
+];
+
+function navClass({ isActive }) {
+  return `text-sm font-medium transition-colors hover:text-primary ${
+    isActive ? "text-primary" : "text-foreground/70"
+  }`;
+}
 
 export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { user, isLoggedIn, role, canWrite, isAdmin, logout } = useAuth();
+  const { pathname } = useLocation();
+  // Each menu remembers the page it was opened on, so it closes by itself after navigating
+  const [openMenu, setOpenMenu] = useState(null);
+  const [query, setQuery] = useState("");
+  const accountRef = useRef(null);
+  const navigate = useNavigate();
 
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
+  const isOpen = (name) => openMenu?.name === name && openMenu.path === pathname;
+  const setOpen = (name, open) => setOpenMenu(open ? { name, path: pathname } : null);
+  const menuOpen = isOpen("mobile");
+  const accountOpen = isOpen("account");
+  const searchOpen = isOpen("search");
+  const setMenuOpen = (open) => setOpen("mobile", open);
+  const setAccountOpen = (open) => setOpen("account", open);
+  const setSearchOpen = (open) => setOpen("search", open);
 
-  // Re-evaluated on every navigation, so the menu updates after login/logout
-  useLocation();
-  const loggedIn = isLoggedIn();
-  const visiblePages = [
-    ...pageData.filter((page) => loggedIn || !page.requiresAuth),
-    ...(loggedIn ? [] : [{ name: "Login", path: "/login" }]),
-  ];
+  // Close the account dropdown when clicking elsewhere
+  useEffect(() => {
+    function handleClick(e) {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setOpenMenu((current) => (current?.name === "account" ? null : current));
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleSearch(e) {
+    e.preventDefault();
+    navigate(`/recipes?q=${encodeURIComponent(query.trim())}`);
+    setQuery("");
+  }
+
+  function handleLogout() {
+    logout();
+    navigate("/home");
+  }
 
   return (
-    <NavigationMenu className="bg-white fixed w-full top-0 left-0 h-24 z-50 max-w-none flex-col md:flex-row justify-between border-b border-base-100 px-6 md:px-12 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-      {/* Top Row Wrapper: Handles logo placement and mobile menu toggle placement */}
-      <div className="flex items-center justify-between w-full md:w-auto h-full">
-        {/* Left Side (Logo) */}
-        <Link to="/home" onClick={closeMenu} className="transition-opacity">
-          <img
-            src={logo}
-            alt="ChefColin Logo"
-            className="h-14 w-auto object-contain"
-          />
+    <header className="fixed inset-x-0 top-0 z-50 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
+        <Link to="/home" className="flex shrink-0 items-center gap-2.5">
+          <img src={logo} alt="" className="h-9 w-9" />
+          <span className="font-serif text-xl font-semibold tracking-tight">
+            ChefColin
+          </span>
         </Link>
 
-        {/* Mobile Toggle Trigger Button (Hidden on Desktop) */}
-        <button
-          onClick={toggleMenu}
-          type="button"
-          className="md:hidden p-2 rounded-xl text-stone-600 hover:text-primary transition-colors cursor-pointer"
-        >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </div>
-
-      {/* ======================================================= */}
-      <NavigationMenuList className="hidden md:flex space-x-8 items-baseline">
-        {visiblePages.map((page) => {
-          return (
-            <NavigationMenuItem key={page.path}>
-              <Link to={page.path} className="navItem">
-                <NavigationMenuLink
-                  className={`${navigationMenuTriggerStyle()} bg-transparent text-charcoal-800 hover:bg-transparent hover:text-primary text-sm font-bold uppercase tracking-widest transition-colors duration-200`}
-                >
-                  {page.name}
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-          );
-        })}
-      </NavigationMenuList>
-
-      {/* ======================================================= */}
-      <div
-        className={`absolute top-24 left-0 w-full bg-white border-b border-base-100 shadow-md md:hidden transition-all duration-300 ease-in-out z-40 overflow-hidden ${
-          isOpen
-            ? "max-h-[60vh] opacity-100 visible"
-            : "max-h-0 opacity-0 invisible"
-        }`}
-      >
-        <div className="flex flex-col px-6 py-6 space-y-4">
-          {visiblePages.map((page) => (
-            <Link
-              key={page.path}
-              to={page.path}
-              onClick={closeMenu}
-              className="text-stone-700 hover:text-primary text-sm font-bold uppercase tracking-widest py-2 transition-colors duration-200 border-b border-stone-50 last:border-none"
-            >
-              {page.name}
-            </Link>
+        <nav className="hidden items-center gap-6 md:flex">
+          {NAV_LINKS.map((link) => (
+            <NavLink key={link.path} to={link.path} className={navClass}>
+              {link.name}
+            </NavLink>
           ))}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          {searchOpen ? (
+            <form onSubmit={handleSearch} className="hidden sm:block">
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onBlur={() => !query && setSearchOpen(false)}
+                placeholder="Search recipes…"
+                className="h-9 w-56 rounded-full border bg-card px-4 text-sm outline-none focus:ring-2 focus:ring-ring/30"
+              />
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Search recipes"
+              className="hidden h-9 w-9 items-center justify-center rounded-full text-foreground/70 hover:bg-muted hover:text-foreground sm:flex cursor-pointer"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          )}
+
+          {canWrite && (
+            <Link
+              to="/createblog"
+              className="hidden items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 sm:flex"
+            >
+              <SquarePen className="h-4 w-4" />
+              Write
+            </Link>
+          )}
+
+          {isLoggedIn ? (
+            <div className="relative hidden md:block" ref={accountRef}>
+              <button
+                type="button"
+                onClick={() => setAccountOpen(!accountOpen)}
+                className="flex items-center gap-1.5 rounded-full p-1 pr-2 hover:bg-muted cursor-pointer"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                  {initials(user.name)}
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+
+              {accountOpen && (
+                <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border bg-popover shadow-lg">
+                  <div className="border-b px-4 py-3">
+                    <p className="truncate text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {ROLE_LABELS[role]}
+                    </p>
+                  </div>
+                  <div className="py-1 text-sm">
+                    <Link to="/profile" className="flex items-center gap-2 px-4 py-2 hover:bg-muted">
+                      <Bookmark className="h-4 w-4" /> Saved & account
+                    </Link>
+                    {isAdmin && (
+                      <Link to="/admin" className="flex items-center gap-2 px-4 py-2 hover:bg-muted">
+                        <Users className="h-4 w-4" /> Manage users
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-muted cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4" /> Log out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted md:block"
+            >
+              Sign in
+            </Link>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Open menu"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted md:hidden cursor-pointer"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
-    </NavigationMenu>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="border-t bg-background px-4 pb-6 pt-4 md:hidden">
+          <form onSubmit={handleSearch} className="mb-4">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search recipes…"
+              className="h-10 w-full rounded-full border bg-card px-4 text-sm outline-none"
+            />
+          </form>
+          <nav className="flex flex-col text-base">
+            {NAV_LINKS.map((link) => (
+              <NavLink key={link.path} to={link.path} className="border-b py-3">
+                {link.name}
+              </NavLink>
+            ))}
+            {canWrite && (
+              <Link to="/createblog" className="border-b py-3">Write a recipe</Link>
+            )}
+            {isLoggedIn ? (
+              <>
+                <Link to="/profile" className="border-b py-3">Saved & account</Link>
+                {isAdmin && <Link to="/admin" className="border-b py-3">Manage users</Link>}
+                <button type="button" onClick={handleLogout} className="py-3 text-left cursor-pointer">
+                  Log out
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="py-3 font-medium text-primary">Sign in</Link>
+            )}
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

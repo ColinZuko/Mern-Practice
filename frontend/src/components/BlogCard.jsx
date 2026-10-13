@@ -1,99 +1,126 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'
-import {
-  Card,
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ChefHat } from "lucide-react";
+import { imageUrl } from "../api";
+import { cuisineLabel, formatDate, readingTime } from "../lib/recipes";
 
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {getPost} from '../api';
+// Post cover image with a neutral placeholder when it's missing or fails to load
+export function PostImage({ post, className = "", eager = false }) {
+  const [failed, setFailed] = useState(false);
+  const src = imageUrl(post.imageId);
 
-
-
-export function BlogCard({ post }){
-
-        let date = new Date(post.dateCreated)
-        let stringDate = date.toString()
-
-        const [imageUrl, setImageUrl] = useState(null);
-
-        useEffect(() => {
-            async function fetchFullPost() {
-                // If the initial post prop already has the image, use it directly
-                if (post.image?.data?.imageSource) {
-                    setImageUrl(post.image.data.imageSource.replace('application/octet-stream', 'image/png'));
-                } else if (post._id) {
-                    // Otherwise, fetch the full post individually to get the image
-                    const fullPost = await getPost(post._id);
-                    if (fullPost?.image?.data?.imageSource) {
-                        setImageUrl(fullPost.image.data.imageSource.replace('application/octet-stream', 'image/png'));
-                    }
-                }
-            }
-            fetchFullPost();
-        }, [post]);
-
-return (
-  <Card className="flex flex-col h-full w-full overflow-hidden border border-stone-200 bg-white transition-all duration-200 hover:bg-stone-50 hover:shadow-md">
-    <Link 
-      to={`/readblog/${post._id}`} 
-      className="flex flex-col flex-grow h-full w-full group"
-    >
-      {/* Visual Anchor Area: Image placed at top of card flow */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-stone-100 shrink-0">
-        {imageUrl ? (
-          <img 
-            src={imageUrl} 
-            alt={post.title} 
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-stone-200/50 text-xs font-medium text-stone-400">
-            No image available
-          </div>
-        )}
+  if (!src || failed) {
+    return (
+      <div className={`flex items-center justify-center bg-muted text-muted-foreground/50 ${className}`}>
+        <ChefHat className="h-10 w-10" />
       </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={post.title}
+      loading={eager ? "eager" : "lazy"}
+      onError={() => setFailed(true)}
+      className={`object-cover ${className}`}
+    />
+  );
+}
 
-      {/* Main Content Body: Flex grows to fill vertical layout whitespace */}
-      <CardHeader className="p-4 space-y-2 flex-grow">
-        {/* Line clamping prevents structural overflow */}
-        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
+function Eyebrow({ post }) {
+  const tag = post.cuisines?.[0];
+  if (!tag) return null;
+  return (
+    <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+      {cuisineLabel(tag)}
+    </span>
+  );
+}
+
+function Meta({ post }) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      {post.authorName || "Unknown author"}
+      <span className="mx-1.5">·</span>
+      {formatDate(post.dateCreated)}
+      <span className="mx-1.5">·</span>
+      {readingTime(post.content)} min read
+    </p>
+  );
+}
+
+// variant: "default" (grid card), "feature" (large lead story), "compact" (small row)
+export function BlogCard({ post, variant = "default", rank }) {
+  const link = `/readblog/${post._id}`;
+
+  if (variant === "feature") {
+    return (
+      <Link to={link} className="group block">
+        <div className="overflow-hidden rounded-2xl">
+          <PostImage
+            post={post}
+            eager
+            className="aspect-[16/10] w-full transition-transform duration-700 group-hover:scale-[1.03]"
+          />
+        </div>
+        <div className="mt-6 space-y-3">
+          <Eyebrow post={post} />
+          <h2 className="text-3xl font-semibold leading-tight text-balance group-hover:text-primary sm:text-4xl lg:text-5xl">
+            {post.title}
+          </h2>
+          <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            {post.description}
+          </p>
+          <Meta post={post} />
+        </div>
+      </Link>
+    );
+  }
+
+  if (variant === "compact") {
+    return (
+      <Link to={link} className="group flex items-start gap-4">
+        {rank && (
+          <span className="w-7 shrink-0 font-serif text-3xl font-semibold leading-none text-primary/30">
+            {rank}
+          </span>
+        )}
+        <div className="min-w-0 flex-1 space-y-1">
+          <Eyebrow post={post} />
+          <h3 className="text-lg font-semibold leading-snug group-hover:text-primary">
+            {post.title}
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            {post.authorName || "Unknown author"} · {post.views || 0} views
+          </p>
+        </div>
+        <div className="shrink-0 overflow-hidden rounded-lg">
+          <PostImage post={post} className="h-20 w-20" />
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <Link to={link} className="group flex h-full flex-col">
+      <div className="overflow-hidden rounded-xl">
+        <PostImage
+          post={post}
+          className="aspect-[4/3] w-full transition-transform duration-500 group-hover:scale-[1.04]"
+        />
+      </div>
+      <div className="mt-4 flex flex-1 flex-col gap-2">
+        <Eyebrow post={post} />
+        <h3 className="text-xl font-semibold leading-snug text-balance group-hover:text-primary">
           {post.title}
         </h3>
-        
-        <p className="text-xs text-stone-500 line-clamp-2 min-h-8">
+        <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
           {post.description}
         </p>
-
-      </CardHeader>
-      <div className="flex flex-wrap gap-1 mb-2 ml-2">
-    {post.cuisines && post.cuisines.map((tag) => (
-        <span 
-            key={tag} 
-            className="text-[9px] font-bold uppercase tracking-wider text-white bg-primary px-1.5 py-1.5 rounded-md"
-        >
-            {tag}
-        </span>
-    ))}
-</div>
-
-      {/* Meta Layout Sections */}
-      <CardContent className="px-4 pb-2 pt-0 shrink-0">
-        <p className="leading-7 [&:not(:first-child)]:mt-6">
-          By {post.authorName || "Unknown Author"}
-        </p>
-      </CardContent>
-
-      <CardFooter className="px-4 pb-4 pt-0 shrink-0 flex items-center justify-between text-[11px] font-medium text-stone-400 tracking-wider uppercase">
-        <span>{stringDate.slice(4, 15)}</span>
-        <span>{post.views || 0} views</span>
-      </CardFooter>
+        <div className="mt-auto pt-2">
+          <Meta post={post} />
+        </div>
+      </div>
     </Link>
-  </Card>
-)
-
-     
-    }
+  );
+}

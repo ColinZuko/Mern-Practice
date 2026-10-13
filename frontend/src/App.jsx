@@ -1,36 +1,54 @@
 import { HashRouter as Router, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
+import { AuthProvider } from "./AuthContext";
 import { About } from "./pages/About";
-import { Contact } from "./pages/Contact";
+import { Recipes } from "./pages/Recipes";
 import { Landing } from "./pages/Landing";
 import { Home } from "./pages/Home";
 import { ReadBlog } from "./pages/ReadBlog";
 import { CreateBlog } from "./pages/CreateBlog";
+import { EditBlog } from "./pages/EditBlog";
 import { Profile } from "./pages/Profile";
+import { Author } from "./pages/Author";
+import { Admin } from "./pages/Admin";
+import { NotFound } from "./pages/NotFound";
 import { Layout } from "./components/Layout";
-import { EditBlog } from "./components/EditBlog";
 import { RequireAuth } from "./components/RequireAuth";
+
+const WRITERS = ["editor", "admin"];
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="/login" element={<Landing />} />
-        <Route element={<Layout />}>
-          {/* Public pages: guests can browse and read */}
-          <Route path="/home" element={<Home />} />
-          <Route path="/readblog/:id" element={<ReadBlog />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="/login" element={<Landing />} />
+          <Route element={<Layout />}>
+            {/* Public pages: guests can browse and read */}
+            <Route path="/home" element={<Home />} />
+            <Route path="/recipes" element={<Recipes />} />
+            <Route path="/readblog/:id" element={<ReadBlog />} />
+            <Route path="/author/:id" element={<Author />} />
+            <Route path="/about" element={<About />} />
+            {/* Old link to the recipes page */}
+            <Route path="/contact" element={<Navigate to="/recipes" replace />} />
 
-          {/* Logged-in only */}
-          <Route path="/createblog" element={<RequireAuth><CreateBlog /></RequireAuth>} />
-          <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="/edit-post/:id" element={<RequireAuth><EditBlog /></RequireAuth>} />
-        </Route>
-      </Routes>
-    </Router>
+            {/* Any logged-in user */}
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+
+            {/* Editors and admins */}
+            <Route path="/createblog" element={<RequireAuth roles={WRITERS}><CreateBlog /></RequireAuth>} />
+            <Route path="/edit-post/:id" element={<RequireAuth roles={WRITERS}><EditBlog /></RequireAuth>} />
+
+            {/* Admins */}
+            <Route path="/admin" element={<RequireAuth roles={["admin"]}><Admin /></RequireAuth>} />
+
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

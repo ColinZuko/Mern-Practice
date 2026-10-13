@@ -1,14 +1,13 @@
 const express = require("express");
-const database = require("./connect");
-const ObjectId = require("mongodb").ObjectId;
-const jwt = require("jsonwebtoken");
-require("dotenv").config({ path: require("path").join(__dirname, "config.env") });
+const crypto = require("crypto");
+const path = require("path");
+const { requireRole } = require("./auth");
+require("dotenv").config({ path: path.join(__dirname, "config.env") });
 
 const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
-  DeleteObjectCommand,
 } = require("@aws-sdk/client-s3");
 
 let awsRoutes = express.Router();
@@ -23,20 +22,30 @@ const s3Client = new S3Client({
   },
 });
 
-//#1 - Retrieve an image - public so guests can see post images
+const MIME_TYPES = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
+// Older uploads were stored without a content type, so fall back to the file extension
+function contentTypeFor(key, storedType) {
+  if (storedType && storedType !== "application/octet-stream") return storedType;
+  return MIME_TYPES[path.extname(key).toLowerCase()] || "application/octet-stream";
+}
+
+//#1 - Retrieve an image as a base64 data URL (kept for older clients) - public
 awsRoutes.route("/images/:id").get(async (request, response) => {
-  const id = request.params.id;
-  const bucketParams = {
-    Bucket: s3Bucket,
-    Key: id,
-  };
-
   try {
-    const data = await s3Client.send(new GetObjectCommand(bucketParams));
+    const id = request.params.id;
+    const data = await s3Client.send(
+      new GetObjectCommand({ Bucket: s3Bucket, Key: id }),
+    );
 
-    const contenttype = data.ContentType;
     const srcString = await data.Body.transformToString("base64");
-    const imageSource = `data:${contenttype};base64,${srcString}`;
+    const imageSource = `data:${contentTypeFor(id, data.ContentType)};base64,${srcString}`;
 
     response.json({ imageSource });
   } catch (error) {
@@ -46,39 +55,60 @@ awsRoutes.route("/images/:id").get(async (request, response) => {
   }
 });
 
-//#2 - Create an image
-awsRoutes.route("/images").post(verifyToken, async (request, response) => {
-  const file = request.files[0];
-  const bucketParams = {
-    Bucket: s3Bucket,
-    Key: file.originalname,
-    Body: file.buffer,
-  };
+//#1b - Stream the image file itself so <img src> can point straight at it and browsers can cache it - public
+awsRoutes.route("/images/:id/raw").get(async (request, response) => {
+  try {
+    const id = request.params.id;
+    const data = await s3Client.send(
+      new GetObjectCommand({ Bucket: s3Bucket, Key: id }),
+    );
 
-  const data = await s3Client.send(new PutObjectCommand(bucketParams));
-
-  response.json(data);
+    response.set({
+      "Content-Type": contentTypeFor(id, data.ContentType),
+      "Cache-Control": "public, max-age=604800",
+    });
+    if (data.ContentLength) response.set("Content-Length", data.ContentLength);
+    data.Body.pipe(response);
+  } catch (error) {
+    const status = error.name === "NoSuchKey" ? 404 : 500;
+    if (status === 500) console.error("Error streaming image from S3:", error);
+    response.status(status).end();
+  }
 });
 
-function verifyToken(request, response, next) {
-  const authHeaders = request.headers["authorization"];
-  const token = authHeaders && authHeaders.split(" ")[1];
-  if (!token) {
-    return response
-      .status(401)
-      .json({ message: "Authentication token is missing" });
-  }
-
-  jwt.verify(token, process.env.SECRETKEY, (error, user) => {
-    if (error) {
-      return response
-        .status(403)
-        .json({ message: "Invalid authentication token" });
+//#2 - Upload an image - editors and admins only
+awsRoutes
+  .route("/images")
+  .post(requireRole("editor", "admin"), async (request, response) => {
+    const file = request.files && request.files[0];
+    if (!file) {
+      return response.status(400).json({ message: "No image uploaded" });
     }
-    request.user = user;
 
-    next();
+    const extension = path.extname(file.originalname).toLowerCase();
+    if (!MIME_TYPES[extension]) {
+      return response
+        .status(400)
+        .json({ message: "Only jpg, png, webp or gif images are allowed" });
+    }
+
+    // Unique key so two uploads called "image.jpg" can't overwrite each other
+    const key = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${extension}`;
+
+    try {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: s3Bucket,
+          Key: key,
+          Body: file.buffer,
+          ContentType: MIME_TYPES[extension],
+        }),
+      );
+      response.json({ key });
+    } catch (error) {
+      console.error("Error uploading image to S3:", error);
+      response.status(500).json({ message: "Image upload failed" });
+    }
   });
-}
 
 module.exports = awsRoutes;
