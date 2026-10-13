@@ -14,6 +14,26 @@ function isValidId(id) {
   return typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
 }
 
+// Keeps only the known recipe template fields, with sensible types and lengths
+function cleanRecipe(input) {
+  if (!input || typeof input !== "object") return null;
+  const number = (value, max) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), max) : null;
+  };
+  const text = (value, max) => (typeof value === "string" ? value.slice(0, max) : "");
+  return {
+    prepTime: number(input.prepTime, 10000),
+    cookTime: number(input.cookTime, 10000),
+    servings: text(input.servings, 40),
+    ovenTemp: number(input.ovenTemp, 400),
+    difficulty: ["easy", "medium", "hard"].includes(input.difficulty) ? input.difficulty : "",
+    ingredients: text(input.ingredients, 10000),
+    method: text(input.method, 20000),
+    tips: text(input.tips, 5000),
+  };
+}
+
 // Admins can manage any post, editors only their own
 function canManagePost(user, post) {
   if (user.role === "admin") return true;
@@ -40,6 +60,7 @@ postRoutes.route("/posts").get(async (request, response) => {
         { title: { $regex: pattern, $options: "i" } },
         { description: { $regex: pattern, $options: "i" } },
         { content: { $regex: pattern, $options: "i" } },
+        { "recipe.ingredients": { $regex: pattern, $options: "i" } },
       ];
     }
 
@@ -109,6 +130,7 @@ postRoutes
           ? request.body.cuisines
           : [],
         imageId: request.body.imageId,
+        recipe: cleanRecipe(request.body.recipe),
         // Author always comes from the verified account, never the request body
         author: request.user._id,
         authorName: request.user.name,
@@ -180,6 +202,7 @@ postRoutes
       };
       // Only replace the cover image when a new one was uploaded
       if (request.body.imageId) changes.imageId = request.body.imageId;
+      if (request.body.recipe) changes.recipe = cleanRecipe(request.body.recipe);
 
       await db.collection("posts").updateOne({ _id: postId }, { $set: changes });
       response.json({ success: true, message: "Recipe updated." });

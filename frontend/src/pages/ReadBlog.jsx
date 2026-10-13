@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Check, Clock, Eye, Link2, Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, Check, Clock, Eye, Link2, Pencil, Printer, Trash2 } from "lucide-react";
 import { deletePost, getPost, getPosts, logView } from "../api";
 import { useAuth } from "../useAuth";
 import { BlogCard, PostImage } from "../components/BlogCard";
 import { SaveButton } from "../components/SaveButton";
-import { cuisineLabel, formatDate, initials, readingTime } from "../lib/recipes";
+import { RecipeContent } from "../components/RecipeContent";
+import { cuisineLabel, formatDate, hasRecipe, initials, postText, readingTime } from "../lib/recipes";
 
 export function ReadBlog() {
   const { id } = useParams();
@@ -136,7 +137,7 @@ export function ReadBlog() {
           <span className="hidden h-8 border-l sm:block" />
           <span className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> {readingTime(post.content)} min read
+              <Clock className="h-3.5 w-3.5" /> {readingTime(postText(post))} min read
             </span>
             <span className="flex items-center gap-1">
               <Eye className="h-3.5 w-3.5" /> {post.views || 0} views
@@ -144,7 +145,20 @@ export function ReadBlog() {
           </span>
         </div>
 
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-2 print:hidden">
+          {hasRecipe(post.recipe) && (
+            <a
+              href="#recipe"
+              onClick={(e) => {
+                // HashRouter uses the URL hash for routing, so scroll instead of following the link
+                e.preventDefault();
+                document.getElementById("recipe")?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+            >
+              <ArrowDown className="h-4 w-4" /> Jump to recipe
+            </a>
+          )}
           <SaveButton postId={post._id} />
           <button
             type="button"
@@ -153,6 +167,13 @@ export function ReadBlog() {
           >
             {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
             {copied ? "Link copied" : "Copy link"}
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted cursor-pointer"
+          >
+            <Printer className="h-4 w-4" /> Print
           </button>
           {canManage(post) && (
             <>
@@ -178,12 +199,12 @@ export function ReadBlog() {
         <PostImage post={post} eager className="aspect-[16/9] w-full rounded-2xl" />
       </div>
 
-      <div className="mx-auto mt-12 max-w-[68ch] px-4 sm:px-6">
-        <div className="article-body">{post.content}</div>
+      <div className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
+        <RecipeContent post={post} />
       </div>
 
       {related.length > 0 && (
-        <section className="mx-auto mt-24 max-w-7xl px-4 sm:px-6">
+        <section className="mx-auto mt-24 max-w-7xl px-4 sm:px-6 print:hidden">
           <h2 className="mb-8 border-b pb-3 text-2xl font-semibold sm:text-3xl">More like this</h2>
           <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((p) => (

@@ -11,14 +11,15 @@ export function CreateBlog() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
       <header className="mb-10 border-b pb-6">
         <h1 className="text-4xl font-semibold">Write a recipe</h1>
         <p className="mt-2 text-muted-foreground">
-          Share a dish worth cooking: a great photo, a short summary and clear steps.
+          Fill in the template below. Your progress is saved in this browser as you type.
         </p>
       </header>
       <PostForm
+        draftKey="pickleandpan:new-recipe-draft"
         submitLabel="Publish recipe"
         submittingLabel="Publishing…"
         onSubmit={handleSubmit}

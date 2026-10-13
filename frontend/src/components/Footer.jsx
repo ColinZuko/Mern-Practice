@@ -4,7 +4,7 @@ import { CUISINES } from "../lib/recipes";
 
 export function Footer() {
   return (
-    <footer className="mt-24 border-t bg-secondary/60">
+    <footer className="mt-24 border-t bg-secondary/60 print:hidden">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <Link to="/home" className="flex items-center gap-2.5">

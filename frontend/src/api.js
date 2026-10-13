@@ -54,6 +54,7 @@ export async function createPost(post) {
     description: post.description,
     content: post.content,
     cuisines: post.cuisines,
+    recipe: post.recipe,
     imageId,
   });
   return response;
@@ -65,6 +66,7 @@ export async function updatePost(id, post) {
     description: post.description,
     content: post.content,
     cuisines: post.cuisines,
+    recipe: post.recipe,
   };
   // Only upload when the editor picked a new cover image
   if (post.file) changes.imageId = await uploadImage(post.file);

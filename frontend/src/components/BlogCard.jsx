@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 import { imageUrl } from "../api";
-import { cuisineLabel, formatDate, readingTime } from "../lib/recipes";
+import { cuisineLabel, formatDate, postText, readingTime } from "../lib/recipes";
 
 // Post cover image with a neutral placeholder when it's missing or fails to load
 export function PostImage({ post, className = "", eager = false }) {
@@ -44,7 +44,7 @@ function Meta({ post }) {
       <span className="mx-1.5">·</span>
       {formatDate(post.dateCreated)}
       <span className="mx-1.5">·</span>
-      {readingTime(post.content)} min read
+      {readingTime(postText(post))} min read
     </p>
   );
 }
