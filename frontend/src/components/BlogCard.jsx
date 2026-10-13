@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
+import { BreadIcon } from "./BreadIcon";
 import { imageUrl } from "../api";
 import { cuisineLabel, formatDate, postText, readingTime } from "../lib/recipes";
 
@@ -37,14 +38,26 @@ function Eyebrow({ post }) {
   );
 }
 
+function Likes({ post }) {
+  if (!post.likes) return null;
+  return (
+    <span className="inline-flex items-center gap-1" title={`${post.likes} ${post.likes === 1 ? "like" : "likes"}`}>
+      <BreadIcon filled className="h-3.5 w-3.5" />
+      {post.likes}
+    </span>
+  );
+}
+
 function Meta({ post }) {
   return (
-    <p className="text-xs text-muted-foreground">
+    <p className="flex flex-wrap items-center text-xs text-muted-foreground">
       {post.authorName || "Unknown author"}
       <span className="mx-1.5">·</span>
       {formatDate(post.dateCreated)}
       <span className="mx-1.5">·</span>
       {readingTime(postText(post))} min read
+      {post.likes > 0 && <span className="mx-1.5">·</span>}
+      <Likes post={post} />
     </p>
   );
 }
@@ -90,8 +103,9 @@ export function BlogCard({ post, variant = "default", rank }) {
           <h3 className="text-lg font-semibold leading-snug group-hover:text-primary">
             {post.title}
           </h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
             {post.authorName || "Unknown author"} · {post.views || 0} views
+            {post.likes > 0 && <>· <Likes post={post} /></>}
           </p>
         </div>
         <div className="shrink-0 overflow-hidden rounded-lg">

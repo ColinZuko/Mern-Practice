@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getCurrentUser, getToken, logout as clearToken, saveToken } from "./auth";
-import { getMe, toggleSaved } from "./api";
+import { getMe, toggleLike as toggleLikeRequest, toggleSaved } from "./api";
 import { AuthContext } from "./useAuth";
 
 // Fetches the account (current role, saved recipes) from the server.
@@ -60,6 +60,16 @@ export function AuthProvider({ children }) {
     setUser((current) => ({ ...current, saved }));
   }
 
+  // Returns the post's new like count
+  async function toggleLike(postId) {
+    const { liked, likes } = await toggleLikeRequest(postId);
+    setUser((current) => {
+      const others = (current.liked || []).filter((id) => id !== postId);
+      return { ...current, liked: liked ? [...others, postId] : others };
+    });
+    return likes;
+  }
+
   const role = user?.role || "user";
   const value = {
     user,
@@ -71,12 +81,14 @@ export function AuthProvider({ children }) {
     canWrite: !!user && (role === "editor" || role === "admin"),
     isAdmin: !!user && role === "admin",
     isSaved: (postId) => !!user?.saved?.includes(postId),
+    isLiked: (postId) => !!user?.liked?.includes(postId),
     canManage: (post) =>
       !!user && (role === "admin" || (role === "editor" && post.author === user._id)),
     login,
     logout,
     refresh,
     toggleSave,
+    toggleLike,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

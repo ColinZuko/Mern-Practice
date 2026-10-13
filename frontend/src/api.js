@@ -47,6 +47,29 @@ export async function logView(id) {
   }
 }
 
+// Returns { liked, likes }
+export async function toggleLike(postId) {
+  const response = await axios.post(`${URL}/posts/${postId}/like`);
+  return response.data;
+}
+
+// ---- Comments ----
+
+export async function getComments(postId) {
+  const response = await axios.get(`${URL}/posts/${postId}/comments`);
+  return response.data;
+}
+
+export async function addComment(postId, text) {
+  const response = await axios.post(`${URL}/posts/${postId}/comments`, { text });
+  return response.data;
+}
+
+export async function deleteComment(commentId) {
+  const response = await axios.delete(`${URL}/comments/${commentId}`);
+  return response.data;
+}
+
 export async function createPost(post) {
   const imageId = await uploadImage(post.file);
   const response = await axios.post(`${URL}/posts`, {

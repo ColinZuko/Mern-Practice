@@ -20,7 +20,7 @@ function isVerified(user) {
 }
 
 function withRole(user) {
-    return { ...user, role: user.role || "user", saved: user.saved || [], emailVerified: isVerified(user) };
+    return { ...user, role: user.role || "user", saved: user.saved || [], liked: user.liked || [], emailVerified: isVerified(user) };
 }
 
 // Stores a fresh verification token for the user and emails them the link.

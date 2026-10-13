@@ -6,6 +6,8 @@ import { useAuth } from "../useAuth";
 import { BlogCard, PostImage } from "../components/BlogCard";
 import { SaveButton } from "../components/SaveButton";
 import { RecipeContent } from "../components/RecipeContent";
+import { LikeButton } from "../components/LikeButton";
+import { Comments } from "../components/Comments";
 import { cuisineLabel, formatDate, hasRecipe, initials, postText, readingTime } from "../lib/recipes";
 
 export function ReadBlog() {
@@ -159,6 +161,7 @@ export function ReadBlog() {
               <ArrowDown className="h-4 w-4" /> Jump to recipe
             </a>
           )}
+          <LikeButton key={post._id} postId={post._id} initialCount={post.likes || 0} />
           <SaveButton postId={post._id} />
           <button
             type="button"
@@ -202,6 +205,8 @@ export function ReadBlog() {
       <div className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         <RecipeContent post={post} />
       </div>
+
+      <Comments post={post} />
 
       {related.length > 0 && (
         <section className="mx-auto mt-24 max-w-7xl px-4 sm:px-6 print:hidden">

@@ -5,6 +5,7 @@ const cors = require("cors");
 const posts = require("./postRoutes");
 const users = require("./userRoutes");
 const awsRoutes = require("./awsRoutes");
+const comments = require("./commentRoutes");
 const multer = require("multer");
 const upload = multer();
 
@@ -43,6 +44,7 @@ app.use((req, res, next) => {
 app.use(posts);
 app.use(users);
 app.use(awsRoutes);
+app.use(comments);
 
 // Vercel imports the app as a serverless function; everywhere else (Render, local) we need a listening server
 if (!process.env.VERCEL) {

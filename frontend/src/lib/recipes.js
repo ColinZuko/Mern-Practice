@@ -45,6 +45,17 @@ export function initials(name = "") {
     .join("");
 }
 
+// "just now", "5 minutes ago", "3 days ago", falling back to the date after a month
+export function timeAgo(value) {
+  const seconds = Math.round((Date.now() - new Date(value).getTime()) / 1000);
+  const ago = (amount, unit) => `${amount} ${unit}${amount === 1 ? "" : "s"} ago`;
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return ago(Math.floor(seconds / 60), "minute");
+  if (seconds < 86400) return ago(Math.floor(seconds / 3600), "hour");
+  if (seconds < 30 * 86400) return ago(Math.floor(seconds / 86400), "day");
+  return formatDate(value);
+}
+
 export const ROLE_LABELS = {
   admin: "Admin",
   editor: "Editor",
