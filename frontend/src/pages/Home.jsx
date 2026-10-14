@@ -130,7 +130,11 @@ export function Home() {
       {/* Latest */}
       {latest.length > 0 && (
         <section className="pt-16">
-          <SectionHeading title="Latest recipes" link="/recipes" linkText="View all" />
+          <SectionHeading
+            title="Latest recipes"
+            link="/recipes"
+            linkText="View all"
+          />
           <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
             {latest.map((post) => (
               <BlogCard key={post._id} post={post} />
@@ -143,16 +147,18 @@ export function Home() {
       <section className="mt-20 grid items-center gap-8 rounded-3xl bg-primary px-8 py-12 text-primary-foreground sm:px-12 md:grid-cols-[auto_1fr]">
         <Logo className="h-24 w-24 rounded-full ring-4 ring-white/20" />
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Cooking at home, written down.</h2>
+          <h2 className="text-3xl font-semibold">
+            Cooking at home, written down.
+          </h2>
           <p className="max-w-2xl leading-relaxed text-primary-foreground/80">
-            Pickle &amp; Pan is a growing collection of tried-and-tested recipes from
-            our own kitchens. Create a free account to save your favourites.
+            Pickle &amp; Pan is a growing collection of my favourite homemade
+            recipes. Create a free account to save your favourites.
           </p>
           <Link
             to="/about"
             className="inline-flex items-center gap-1 pt-1 text-sm font-semibold underline-offset-4 hover:underline"
           >
-            Read our story <ArrowRight className="h-4 w-4" />
+            Read my story <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
