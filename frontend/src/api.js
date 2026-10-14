@@ -2,6 +2,7 @@ import axios from "axios";
 import { getToken } from "./auth";
 
 const URL = import.meta.env.VITE_API_URL || "";
+export const API_URL = URL;
 
 axios.interceptors.request.use((config) => {
   const token = getToken();

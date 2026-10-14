@@ -3,6 +3,7 @@ import { DatabaseBackup, Trash2 } from "lucide-react";
 import { createBackupNow, deleteUser, getBackups, getUsers, setUserRole } from "../api";
 import { useAuth } from "../useAuth";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
+import { useSeo } from "../useSeo";
 
 const ROLE_OPTIONS = ["user", "editor", "admin"];
 
@@ -76,6 +77,7 @@ function BackupsPanel() {
 }
 
 export function Admin() {
+  useSeo({ title: "Manage users", noindex: true });
   const { user: me } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

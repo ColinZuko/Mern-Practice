@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowDown, Check, Clock, Eye, Link2, Pencil, Printer, Trash2 } from "lucide-react";
-import { deletePost, getPost, getPosts, logView } from "../api";
+import { API_URL, deletePost, getPost, getPosts, logView } from "../api";
+import { useSeo } from "../useSeo";
+import { describe, idFromRecipeParam, recipeImage, recipePath, recipeStructuredData } from "../lib/seo";
 import { useAuth } from "../useAuth";
 import { BlogCard, PostImage } from "../components/BlogCard";
 import { SaveButton } from "../components/SaveButton";
@@ -11,7 +13,10 @@ import { Comments } from "../components/Comments";
 import { cuisineLabel, formatDate, hasRecipe, initials, postText, readingTime } from "../lib/recipes";
 
 export function ReadBlog() {
-  const { id } = useParams();
+  // Addresses look like /recipe/rosemary-focaccia-<id>; only the id matters
+  const { slugId } = useParams();
+  const id = idFromRecipeParam(slugId);
+  const location = useLocation();
   const navigate = useNavigate();
   const { canManage } = useAuth();
   // Stored with the id it was loaded for, so an old recipe never shows while the next one loads
@@ -24,6 +29,7 @@ export function ReadBlog() {
 
     async function load() {
       try {
+        if (!id) throw new Error("No recipe id in the address");
         const data = await getPost(id);
         if (cancelled) return;
         setLoaded({ id, post: data, related: [], notFound: false });
@@ -45,7 +51,7 @@ export function ReadBlog() {
     load();
 
     // Count each visit once, even when React runs effects twice in development
-    if (viewLogged.current !== id) {
+    if (id && viewLogged.current !== id) {
       viewLogged.current = id;
       logView(id);
     }
@@ -54,8 +60,29 @@ export function ReadBlog() {
     };
   }, [id]);
 
-  const current = loaded.id === id ? loaded : { post: null, related: [], notFound: false };
+  const current = loaded.id === id ? loaded : { post: null, related: [], notFound: !id };
   const { post, related, notFound } = current;
+
+  // Keep one address per recipe: add or update the title part (e.g. after the title was edited)
+  const canonicalPath = post ? recipePath(post) : null;
+  useEffect(() => {
+    if (canonicalPath && location.pathname !== canonicalPath) {
+      navigate(canonicalPath + location.search + location.hash, { replace: true });
+    }
+  }, [canonicalPath, location.pathname, location.search, location.hash, navigate]);
+
+  useSeo(
+    post
+      ? {
+          title: post.title,
+          description: describe(post.description || post.content),
+          path: canonicalPath,
+          image: recipeImage(post, API_URL),
+          type: "article",
+          structuredData: recipeStructuredData(post, API_URL),
+        }
+      : { title: notFound ? "Recipe not found" : "Recipe", noindex: true },
+  );
 
   async function handleCopyLink() {
     try {
@@ -71,7 +98,7 @@ export function ReadBlog() {
     if (!window.confirm("Delete this recipe? This can't be undone.")) return;
     try {
       await deletePost(post._id);
-      navigate("/home");
+      navigate("/");
     } catch (error) {
       console.error("Error deleting post:", error);
       alert("Failed to delete the recipe. Please try again.");
@@ -152,7 +179,7 @@ export function ReadBlog() {
             <a
               href="#recipe"
               onClick={(e) => {
-                // HashRouter uses the URL hash for routing, so scroll instead of following the link
+                // Smooth scroll instead of jumping, and keep the address clean
                 e.preventDefault();
                 document.getElementById("recipe")?.scrollIntoView({ behavior: "smooth" });
               }}

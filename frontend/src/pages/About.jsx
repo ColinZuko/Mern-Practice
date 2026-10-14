@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useSeo } from "../useSeo";
 
 export function About() {
+  useSeo({ title: "About", description: "How Pickle & Pan started: a student's homemade recipes, kitchen notes and food stories, shared with friends, family and anyone who loves to cook." });
   return (
     <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
       <div className="grid items-center gap-12 md:grid-cols-12">

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "mern-blog-frontend-gray.vercel.app" }],
+      "destination": "https://pickleandpan.com/:path*",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/recipe/:slug", "destination": "/api/recipe-page?slug=:slug" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

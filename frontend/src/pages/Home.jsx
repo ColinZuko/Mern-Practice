@@ -6,6 +6,7 @@ import { BlogCard } from "../components/BlogCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
 import { CUISINES } from "../lib/recipes";
 import { Logo } from "../components/Logo";
+import { useSeo } from "../useSeo";
 
 function SectionHeading({ title, link, linkText }) {
   return (
@@ -41,6 +42,7 @@ function LoadingSkeleton() {
 }
 
 export function Home() {
+  useSeo({ path: "/" });
   const [posts, setPosts] = useState([]);
   const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { createPost } from "../api";
 import { PostForm } from "../components/PostForm";
+import { useSeo } from "../useSeo";
 
 export function CreateBlog() {
+  useSeo({ title: "Write a recipe", noindex: true });
   const navigate = useNavigate();
 
   async function handleSubmit(post) {
     const response = await createPost(post);
-    navigate(`/readblog/${response.data.insertedId}`);
+    navigate(`/recipe/${response.data.insertedId}`);
   }
 
   return (

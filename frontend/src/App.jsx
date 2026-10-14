@@ -1,4 +1,4 @@
-import { HashRouter as Router, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from "react-router-dom";
 import "./App.css";
 import { AuthProvider } from "./AuthContext";
 import { About } from "./pages/About";
@@ -21,19 +21,26 @@ import { AnalyticsTracker } from "./components/AnalyticsTracker";
 
 const WRITERS = ["editor", "admin"];
 
+// Old recipe addresses (/readblog/<id>) go to the new ones; the page then adds the title to the address
+function OldRecipeAddress() {
+  const { id } = useParams();
+  return <Navigate to={`/recipe/${id}`} replace />;
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <AnalyticsTracker />
         <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/login" element={<Landing />} />
           <Route element={<Layout />}>
             {/* Public pages: guests can browse and read */}
-            <Route path="/home" element={<Home />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Navigate to="/" replace />} />
             <Route path="/recipes" element={<Recipes />} />
-            <Route path="/readblog/:id" element={<ReadBlog />} />
+            <Route path="/recipe/:slugId" element={<ReadBlog />} />
+            <Route path="/readblog/:id" element={<OldRecipeAddress />} />
             <Route path="/author/:id" element={<Author />} />
             <Route path="/about" element={<About />} />
             <Route path="/verify-email" element={<VerifyEmail />} />

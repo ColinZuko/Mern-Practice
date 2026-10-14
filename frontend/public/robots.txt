@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Account and admin pages aren't useful in search results
+Disallow: /login
+Disallow: /profile
+Disallow: /admin
+Disallow: /createblog
+Disallow: /edit-post/
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /api/
+
+Sitemap: https://pickleandpan.com/sitemap.xml

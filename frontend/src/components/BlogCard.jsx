@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
 import { BreadIcon } from "./BreadIcon";
 import { imageUrl } from "../api";
+import { recipePath } from "../lib/seo";
 import { cuisineLabel, formatDate, postText, readingTime } from "../lib/recipes";
 
 // Waits between attempts when an image fails. The free backend can take up to a
@@ -91,7 +92,7 @@ function Meta({ post }) {
 
 // variant: "default" (grid card), "feature" (large lead story), "compact" (small row)
 export function BlogCard({ post, variant = "default", rank }) {
-  const link = `/readblog/${post._id}`;
+  const link = recipePath(post);
 
   if (variant === "feature") {
     return (

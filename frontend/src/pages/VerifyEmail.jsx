@@ -3,9 +3,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CircleCheck, CircleX } from "lucide-react";
 import { resendVerification, verifyEmail } from "../api";
 import { useAuth } from "../useAuth";
+import { useSeo } from "../useSeo";
 
 // Opened from the link in the verification email
 export function VerifyEmail() {
+  useSeo({ title: "Confirm your email", noindex: true });
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const { isLoggedIn, isVerified, user, refresh } = useAuth();
@@ -56,7 +58,7 @@ export function VerifyEmail() {
             Thanks! <strong>{shown.email}</strong> is confirmed, so you can now save your favourite recipes.
           </p>
           <Link
-            to={isLoggedIn ? "/home" : "/login"}
+            to={isLoggedIn ? "/" : "/login"}
             className="mt-8 inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {isLoggedIn ? "Start exploring" : "Sign in"}

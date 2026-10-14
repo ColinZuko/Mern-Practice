@@ -7,7 +7,7 @@ export function Footer() {
     <footer className="mt-24 border-t bg-secondary/60 print:hidden">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
-          <Link to="/home" className="flex items-center gap-2.5">
+          <Link to="/" className="flex items-center gap-2.5">
             <Logo className="h-10 w-10" />
             <span className="font-serif text-2xl font-semibold">Pickle &amp; Pan</span>
           </Link>
@@ -21,7 +21,7 @@ export function Footer() {
             Explore
           </h3>
           <ul className="space-y-2 text-sm">
-            <li><Link to="/home" className="hover:text-primary">Home</Link></li>
+            <li><Link to="/" className="hover:text-primary">Home</Link></li>
             <li><Link to="/recipes" className="hover:text-primary">All recipes</Link></li>
             <li><Link to="/about" className="hover:text-primary">About</Link></li>
           </ul>

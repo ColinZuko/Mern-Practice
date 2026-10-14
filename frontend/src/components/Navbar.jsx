@@ -15,7 +15,7 @@ import { useAuth } from "../useAuth";
 import { initials, ROLE_LABELS } from "../lib/recipes";
 
 const NAV_LINKS = [
-  { name: "Home", path: "/home" },
+  { name: "Home", path: "/" },
   { name: "Recipes", path: "/recipes" },
   { name: "About", path: "/about" },
 ];
@@ -63,13 +63,13 @@ export function Navbar() {
 
   function handleLogout() {
     logout();
-    navigate("/home");
+    navigate("/");
   }
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b print:hidden bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
-        <Link to="/home" className="flex shrink-0 items-center gap-2.5">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <Logo className="h-9 w-9" />
           <span className="font-serif text-xl font-semibold tracking-tight">
             Pickle &amp; Pan
@@ -78,7 +78,7 @@ export function Navbar() {
 
         <nav className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => (
-            <NavLink key={link.path} to={link.path} className={navClass}>
+            <NavLink key={link.path} to={link.path} end className={navClass}>
               {link.name}
             </NavLink>
           ))}
@@ -191,7 +191,7 @@ export function Navbar() {
           </form>
           <nav className="flex flex-col text-base">
             {NAV_LINKS.map((link) => (
-              <NavLink key={link.path} to={link.path} className="border-b py-3">
+              <NavLink key={link.path} to={link.path} end className="border-b py-3">
                 {link.name}
               </NavLink>
             ))}

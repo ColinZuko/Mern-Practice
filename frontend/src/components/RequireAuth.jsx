@@ -13,7 +13,7 @@ export function RequireAuth({ children, roles }) {
     return <p className="py-32 text-center text-muted-foreground">Loading…</p>;
   }
   if (roles && !roles.includes(role)) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to="/" replace />;
   }
   return children;
 }

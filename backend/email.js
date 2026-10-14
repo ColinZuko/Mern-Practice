@@ -61,7 +61,7 @@ async function sendEmail({ to, subject, html, text }) {
 
 // Returns true if the email was handed to Resend
 async function sendVerificationEmail({ to, name, token }) {
-  const link = `${SITE_URL}/#/verify-email?token=${token}`;
+  const link = `${SITE_URL}/verify-email?token=${token}`;
   const safeName = escapeHtml(name || "there");
 
   return sendEmail({
@@ -93,7 +93,7 @@ async function sendVerificationEmail({ to, name, token }) {
 
 // Returns true if the email was handed to Resend
 async function sendPasswordResetEmail({ to, name, token }) {
-  const link = `${SITE_URL}/#/reset-password?token=${token}`;
+  const link = `${SITE_URL}/reset-password?token=${token}`;
   const safeName = escapeHtml(name || "there");
 
   return sendEmail({

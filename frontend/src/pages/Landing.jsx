@@ -5,12 +5,14 @@ import { CreateUser } from "../components/CreateUser";
 import { Login } from "../components/Login";
 import { useAuth } from "../useAuth";
 import { Logo } from "../components/Logo";
+import { useSeo } from "../useSeo";
 
 export function Landing() {
+  useSeo({ title: "Sign in", noindex: true });
   const { isLoggedIn } = useAuth();
   const [mode, setMode] = useState("login");
 
-  if (isLoggedIn) return <Navigate to="/home" replace />;
+  if (isLoggedIn) return <Navigate to="/" replace />;
 
   const isLogin = mode === "login";
 
@@ -34,7 +36,7 @@ export function Landing() {
 
       {/* Form panel */}
       <div className="flex flex-col px-6 py-8 sm:px-12">
-        <Link to="/home" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to recipes
         </Link>
 

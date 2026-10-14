@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getAuthor, getPosts } from "../api";
 import { BlogCard } from "../components/BlogCard";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
+import { useSeo } from "../useSeo";
 
 export function Author() {
   const { id } = useParams();
@@ -31,6 +32,13 @@ export function Author() {
     }
     load();
   }, [id]);
+
+  useSeo({
+    title: author ? `Recipes by ${author.name}` : "Author",
+    description: author ? `All recipes by ${author.name} on Pickle & Pan.` : undefined,
+    path: `/author/${id}`,
+    noindex: notFound || posts.length === 0,
+  });
 
   if (notFound) {
     return (

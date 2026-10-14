@@ -5,9 +5,11 @@ import { resetPassword } from "../api";
 import { useAuth } from "../useAuth";
 import { authButtonClass, authInputClass, authLabelClass } from "../components/Login";
 import { PasswordInput } from "../components/PasswordInput";
+import { useSeo } from "../useSeo";
 
 // Opened from the link in the password reset email
 export function ResetPassword() {
+  useSeo({ title: "Choose a new password", noindex: true });
   const [params] = useSearchParams();
   const token = params.get("token") || "";
   const { logout } = useAuth();

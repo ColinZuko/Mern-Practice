@@ -5,6 +5,7 @@ import { deletePost, getPosts } from "../api";
 import { useAuth } from "../useAuth";
 import { BlogCard } from "../components/BlogCard";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
+import { useSeo } from "../useSeo";
 
 const ROLE_DESCRIPTIONS = {
   admin: "You can write recipes, edit or remove any post, and manage user roles.",
@@ -13,6 +14,7 @@ const ROLE_DESCRIPTIONS = {
 };
 
 export function Profile() {
+  useSeo({ title: "Your account", noindex: true });
   const { user, role, canWrite, isVerified, logout } = useAuth();
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState([]);
@@ -48,7 +50,7 @@ export function Profile() {
 
   function handleLogout() {
     logout();
-    navigate("/home");
+    navigate("/");
   }
 
   return (

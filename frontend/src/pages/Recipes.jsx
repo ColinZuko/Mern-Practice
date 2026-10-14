@@ -3,13 +3,23 @@ import { useSearchParams } from "react-router-dom";
 import { Search } from "lucide-react";
 import { getPosts } from "../api";
 import { BlogCard } from "../components/BlogCard";
-import { CUISINES } from "../lib/recipes";
+import { CUISINES, cuisineLabel } from "../lib/recipes";
+import { useSeo } from "../useSeo";
 
 export function Recipes() {
   // Search and cuisine live in the URL so results can be shared and the navbar search can link here
   const [params, setParams] = useSearchParams();
   const searchParam = params.get("q") || "";
   const cuisine = params.get("cuisine") || "";
+
+  useSeo({
+    title: cuisine ? `${cuisineLabel(cuisine)} recipes` : "All recipes",
+    description: cuisine
+      ? `Homemade ${cuisineLabel(cuisine).toLowerCase()} recipes with clear ingredients, steps and cooking times.`
+      : "Browse every Pickle & Pan recipe: search by name or ingredient, or filter by cuisine.",
+    path: cuisine ? `/recipes?cuisine=${encodeURIComponent(cuisine)}` : "/recipes",
+    noindex: !!searchParam,
+  });
 
   const [search, setSearch] = useState(searchParam);
   const [lastSearchParam, setLastSearchParam] = useState(searchParam);

@@ -34,7 +34,7 @@ export function Login() {
 
     if (token) {
       await login(token);
-      navigate("/home");
+      navigate("/");
     } else {
       setErrorMessage(error);
     }

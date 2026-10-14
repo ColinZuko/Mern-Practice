@@ -32,7 +32,7 @@ export function CreateUser() {
       const { token } = await verifyUser({ email: user.email, password: user.password });
       if (token) {
         await login(token);
-        navigate("/home");
+        navigate("/");
         return;
       }
       setErrorMessage("Account created. Please sign in.");

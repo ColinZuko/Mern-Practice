@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { MailCheck } from "lucide-react";
 import { requestPasswordReset } from "../api";
 import { authButtonClass, authInputClass, authLabelClass } from "../components/Login";
+import { useSeo } from "../useSeo";
 
 export function ForgotPassword() {
+  useSeo({ title: "Forgot password", noindex: true });
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sentTo, setSentTo] = useState("");

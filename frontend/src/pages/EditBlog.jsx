@@ -3,8 +3,10 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { getPost, updatePost } from "../api";
 import { useAuth } from "../useAuth";
 import { PostForm } from "../components/PostForm";
+import { useSeo } from "../useSeo";
 
 export function EditBlog() {
+  useSeo({ title: "Edit recipe", noindex: true });
   const { id } = useParams();
   const navigate = useNavigate();
   const { canManage } = useAuth();
@@ -25,7 +27,7 @@ export function EditBlog() {
 
   async function handleSubmit(changes) {
     await updatePost(id, changes);
-    navigate(`/readblog/${id}`);
+    navigate(`/recipe/${id}`);
   }
 
   if (failed) {
@@ -36,7 +38,7 @@ export function EditBlog() {
   }
   // The server enforces this too; this just avoids showing a form that can't be saved
   if (!canManage(post)) {
-    return <Navigate to={`/readblog/${id}`} replace />;
+    return <Navigate to={`/recipe/${id}`} replace />;
   }
 
   return (

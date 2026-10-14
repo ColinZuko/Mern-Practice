@@ -1,6 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
+const sharp = require("sharp");
 const { requireRole } = require("./auth");
 require("dotenv").config({ path: path.join(__dirname, "config.env") });
 
@@ -59,6 +60,38 @@ awsRoutes.route("/images/:id/raw").get(async (request, response) => {
   } catch (error) {
     const status = error.name === "NoSuchKey" ? 404 : 500;
     if (status === 500) console.error("Error streaming image from S3:", error);
+    response.status(status).end();
+  }
+});
+
+// Small in-memory cache: link previews are fetched now and then, no need to redo the work each time
+const shareImageCache = new Map();
+const SHARE_CACHE_SIZE = 30;
+
+//#1c - Share image for link previews (WhatsApp, Facebook, Google): a 1200x630 JPEG, the size
+// and format every app supports, cropped around the most interesting part of the photo - public
+awsRoutes.route("/images/:id/og").get(async (request, response) => {
+  const id = request.params.id;
+  try {
+    let jpeg = shareImageCache.get(id);
+    if (!jpeg) {
+      const data = await s3Client.send(new GetObjectCommand({ Bucket: s3Bucket, Key: id }));
+      const original = Buffer.from(await data.Body.transformToByteArray());
+      jpeg = await sharp(original)
+        .rotate()
+        .resize(1200, 630, { fit: "cover", position: sharp.strategy.attention })
+        .jpeg({ quality: 80, mozjpeg: true })
+        .toBuffer();
+      shareImageCache.set(id, jpeg);
+      if (shareImageCache.size > SHARE_CACHE_SIZE) {
+        shareImageCache.delete(shareImageCache.keys().next().value);
+      }
+    }
+    response.set({ "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=604800" });
+    response.send(jpeg);
+  } catch (error) {
+    const status = error.name === "NoSuchKey" ? 404 : 500;
+    if (status === 500) console.error("Error making share image:", error);
     response.status(status).end();
   }
 });
