@@ -6,7 +6,7 @@ Express + MongoDB backend.
 | Part | Where it runs | Folder |
 |---|---|---|
 | Frontend (React, Vite, Tailwind) | Vercel | `frontend/` |
-| Backend (Express API) | Render | `backend/` |
+| Backend (Express API) | Render, at api.pickleandpan.com | `backend/` |
 | Database | MongoDB Atlas (`BlogData`) | |
 | Photos and daily backups | AWS S3 (`colinblogstorage`) | |
 | Email | Resend | |

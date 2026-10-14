@@ -7,7 +7,7 @@ export const DEFAULT_TITLE = "Pickle & Pan — Homemade recipes, savor every bit
 export const DEFAULT_DESCRIPTION =
   "Tried-and-tested homemade recipes with clear ingredients, steps and cooking times. From weeknight pasta to weekend baking.";
 export const DEFAULT_IMAGE = `${SITE_URL}/og-default.png`;
-export const BACKEND_URL = "https://mern-blog-backend-blt0.onrender.com";
+export const BACKEND_URL = "https://api.pickleandpan.com";
 
 // "Rosemary Focaccia (Easy!)" -> "rosemary-focaccia-easy"; "Köfte" -> "kofte"
 export function slugify(text = "") {

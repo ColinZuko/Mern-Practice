@@ -6,6 +6,8 @@ config.env
 .env
 .env.*
 !.env.example
+# Public build settings (just the API address), safe to commit
+!frontend/.env.production
 
 # Build output and logs
 dist/
