@@ -1,4 +1,6 @@
 {
+  "name": "pickle-and-pan-backend",
+  "private": true,
   "scripts": {
     "start": "node server.js"
   },
