@@ -1,6 +1,6 @@
 import { verifyUser } from "../api";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../useAuth";
 
 export const authLabelClass = "block text-sm font-medium";
@@ -55,7 +55,12 @@ export function Login() {
         />
       </div>
       <div>
-        <label htmlFor="login-password" className={authLabelClass}>Password</label>
+        <div className="flex items-baseline justify-between">
+          <label htmlFor="login-password" className={authLabelClass}>Password</label>
+          <Link to="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <input
           id="login-password"
           onChange={handleChange}

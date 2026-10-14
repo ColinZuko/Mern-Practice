@@ -18,11 +18,29 @@ function verifyToken(request, response, next) {
   }
 
   // Only accept the algorithm we sign with
-  jwt.verify(token, process.env.SECRETKEY, { algorithms: ["HS256"] }, (error, user) => {
+  jwt.verify(token, process.env.SECRETKEY, { algorithms: ["HS256"] }, async (error, user) => {
     if (error) {
       return response
         .status(403)
         .json({ message: "Invalid authentication token" });
+    }
+    try {
+      // Logins from before a password reset no longer count (e.g. if someone else had access).
+      // A second of leeway because token times are rounded down to whole seconds.
+      if (ObjectId.isValid(user._id)) {
+        const account = await database
+          .getDb()
+          .collection("users")
+          .findOne({ _id: new ObjectId(user._id) }, { projection: { passwordChangedAt: 1 } });
+        if (account?.passwordChangedAt && user.iat * 1000 < account.passwordChangedAt.getTime() - 1000) {
+          return response
+            .status(401)
+            .json({ message: "Your password was changed. Please sign in again." });
+        }
+      }
+    } catch (lookupError) {
+      console.error("Session check failed:", lookupError);
+      return response.status(500).json({ message: "Server error" });
     }
     request.user = user;
     next();

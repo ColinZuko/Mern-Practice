@@ -4,8 +4,8 @@ const ObjectId = require('mongodb').ObjectId;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { ROLES, verifyToken, requireRole } = require('./auth');
-const { createVerificationToken, hashToken, sendVerificationEmail } = require('./email');
-const { loginLimiter, signupLimiter, verifyEmailLimiter } = require('./limits');
+const { createVerificationToken, createResetToken, hashToken, sendVerificationEmail, sendPasswordResetEmail } = require('./email');
+const { loginLimiter, signupLimiter, verifyEmailLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require('./limits');
 require('dotenv').config({ path: require('path').join(__dirname, 'config.env') });
 
 let userRoutes = express.Router();
@@ -30,7 +30,7 @@ function passwordProblem(password) {
 }
 
 // Never send password hashes or verification tokens back to the client
-const HIDE_PASSWORD = { projection: { password: 0, verifyTokenHash: 0, verifyTokenExpires: 0 } };
+const HIDE_PASSWORD = { projection: { password: 0, verifyTokenHash: 0, verifyTokenExpires: 0, resetTokenHash: 0, resetTokenExpires: 0 } };
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
 // Accounts created before email verification existed have no flag and count as verified
@@ -145,6 +145,65 @@ userRoutes.route("/users/me/resend-verification").post(verifyToken, async (reque
         return response.status(502).json({ message: "We couldn't send the email right now. Please try again later." });
     }
     response.json({ success: true });
+});
+
+//#1f - Forgot password: email a reset link. Always gives the same answer, so it can't be
+// used to find out which email addresses have an account.
+const RESET_RESPONSE = { success: true, message: "If an account exists for that email, we've sent a link to reset the password." };
+userRoutes.route("/users/forgot-password").post(forgotPasswordLimiter, async (request, response) => {
+    const email = cleanString(request.body.email, 100);
+    if (!email || !EMAIL_PATTERN.test(email)) {
+        return response.status(400).json({ message: "Please enter a valid email address" });
+    }
+    let db = database.getDb();
+    const user = await db.collection("users").findOne({ email }, { projection: { name: 1, email: 1, resetSentAt: 1 } });
+
+    // At most one email a minute per account; extra requests quietly get the same answer
+    const recentlySent = user?.resetSentAt && Date.now() - user.resetSentAt.getTime() < RESEND_COOLDOWN_MS;
+    if (user && !recentlySent) {
+        const { token, hash, expires } = createResetToken();
+        await db.collection("users").updateOne(
+            { _id: user._id },
+            { $set: { resetTokenHash: hash, resetTokenExpires: expires, resetSentAt: new Date() } }
+        );
+        try {
+            await sendPasswordResetEmail({ to: user.email, name: user.name, token });
+        } catch (error) {
+            console.error("Sending password reset email failed:", error);
+        }
+    }
+    response.json(RESET_RESPONSE);
+});
+
+//#1g - Reset password with the token from the email link
+userRoutes.route("/users/reset-password").post(resetPasswordLimiter, async (request, response) => {
+    const token = request.body.token;
+    if (typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) {
+        return response.status(400).json({ message: "This reset link is invalid." });
+    }
+    const problem = passwordProblem(request.body.password);
+    if (problem) {
+        return response.status(400).json({ message: problem });
+    }
+    let db = database.getDb();
+    const user = await db.collection("users").findOne({ resetTokenHash: hashToken(token) });
+    if (!user) {
+        return response.status(400).json({ message: "This reset link is invalid or has already been used." });
+    }
+    if (user.resetTokenExpires < new Date()) {
+        return response.status(400).json({ message: "This reset link has expired. Please ask for a new one.", expired: true });
+    }
+
+    const hash = await bcrypt.hash(request.body.password, SALT_ROUNDS);
+    await db.collection("users").updateOne(
+        { _id: user._id },
+        {
+            // Opening the emailed link also proves the address belongs to them
+            $set: { password: hash, passwordChangedAt: new Date(), emailVerified: true },
+            $unset: { resetTokenHash: "", resetTokenExpires: "", verifyTokenHash: "", verifyTokenExpires: "" },
+        }
+    );
+    response.json({ success: true, email: user.email });
 });
 
 //#2 - Public author profile (no email or other private details)

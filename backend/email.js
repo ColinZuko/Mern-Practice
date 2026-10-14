@@ -8,15 +8,25 @@ require("dotenv").config({ path: require("path").join(__dirname, "config.env") }
 const SITE_URL = (process.env.SITE_URL || "https://pickleandpan.com").replace(/\/$/, "");
 const EMAIL_FROM = process.env.EMAIL_FROM || "Pickle & Pan <hello@pickleandpan.com>";
 const VERIFY_LINK_HOURS = 24;
+const RESET_LINK_HOURS = 1;
 
-// The link carries a random token; only its hash is stored, so a database leak can't be used to verify accounts
-function createVerificationToken() {
+// Links carry a random token; only its hash is stored, so a database leak can't be used to
+// verify accounts or reset passwords
+function createToken(hours) {
   const token = crypto.randomBytes(32).toString("hex");
   return {
     token,
     hash: hashToken(token),
-    expires: new Date(Date.now() + VERIFY_LINK_HOURS * 60 * 60 * 1000),
+    expires: new Date(Date.now() + hours * 60 * 60 * 1000),
   };
+}
+
+function createVerificationToken() {
+  return createToken(VERIFY_LINK_HOURS);
+}
+
+function createResetToken() {
+  return createToken(RESET_LINK_HOURS);
 }
 
 function hashToken(token) {
@@ -81,4 +91,42 @@ async function sendVerificationEmail({ to, name, token }) {
   });
 }
 
-module.exports = { createVerificationToken, hashToken, sendVerificationEmail };
+// Returns true if the email was handed to Resend
+async function sendPasswordResetEmail({ to, name, token }) {
+  const link = `${SITE_URL}/#/reset-password?token=${token}`;
+  const safeName = escapeHtml(name || "there");
+
+  return sendEmail({
+    to,
+    subject: "Reset your Pickle & Pan password",
+    text: `Hi ${name || "there"},\n\nSomeone (hopefully you) asked to reset the password for your Pickle & Pan account. Choose a new password here:\n${link}\n\nThe link works for ${RESET_LINK_HOURS} hour and can be used once. If you didn't ask for this, you can ignore this email; your password stays the same.`,
+    html: `
+      <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #2b2622;">
+        <h1 style="font-size: 26px; margin: 0 0 16px;">Pickle &amp; Pan</h1>
+        <p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6;">Hi ${safeName},</p>
+        <p style="font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6;">
+          Someone (hopefully you) asked to reset the password for your Pickle &amp; Pan account.
+        </p>
+        <p style="margin: 28px 0;">
+          <a href="${link}" style="background: #4f1d3a; color: #ffffff; padding: 12px 24px; border-radius: 999px; text-decoration: none; font-family: Arial, sans-serif; font-weight: bold;">
+            Choose a new password
+          </a>
+        </p>
+        <p style="font-family: Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #6b625b;">
+          The button works for ${RESET_LINK_HOURS} hour and can be used once. If it doesn't open, copy this link into your browser:<br>
+          <a href="${link}" style="color: #4f1d3a; word-break: break-all;">${link}</a>
+        </p>
+        <p style="font-family: Arial, sans-serif; font-size: 13px; color: #6b625b;">
+          If you didn't ask for this, you can ignore this email. Your password stays the same.
+        </p>
+      </div>`,
+  });
+}
+
+module.exports = {
+  createVerificationToken,
+  createResetToken,
+  hashToken,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+};

@@ -13,8 +13,11 @@ import { Author } from "./pages/Author";
 import { Admin } from "./pages/Admin";
 import { NotFound } from "./pages/NotFound";
 import { VerifyEmail } from "./pages/VerifyEmail";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
+import { AnalyticsTracker } from "./components/AnalyticsTracker";
 
 const WRITERS = ["editor", "admin"];
 
@@ -22,6 +25,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <AnalyticsTracker />
         <Routes>
           <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/login" element={<Landing />} />
@@ -33,6 +37,8 @@ function App() {
             <Route path="/author/:id" element={<Author />} />
             <Route path="/about" element={<About />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             {/* Old link to the recipes page */}
             <Route path="/contact" element={<Navigate to="/recipes" replace />} />
 

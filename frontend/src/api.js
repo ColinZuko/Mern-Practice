@@ -139,6 +139,16 @@ export async function verifyEmail(token) {
   return response.data;
 }
 
+export async function requestPasswordReset(email) {
+  const response = await axios.post(`${URL}/users/forgot-password`, { email });
+  return response.data;
+}
+
+export async function resetPassword(token, password) {
+  const response = await axios.post(`${URL}/users/reset-password`, { token, password });
+  return response.data;
+}
+
 export async function resendVerification() {
   const response = await axios.post(`${URL}/users/me/resend-verification`);
   return response.data;

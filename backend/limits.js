@@ -40,4 +40,29 @@ const verifyEmailLimiter = rateLimit({
   handler: tooMany("Too many attempts. Please wait a few minutes and try again."),
 });
 
-module.exports = { loginLimiter, signupLimiter, verifyEmailLimiter };
+// Stops anyone flooding someone's inbox with reset emails
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * MINUTE,
+  limit: 5,
+  keyGenerator: (request) => `${ipKeyGenerator(request.ip)}|${emailOf(request)}`,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: tooMany("Too many reset requests. Please wait 15 minutes and try again."),
+});
+
+// Stops anyone trying reset links at random
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * MINUTE,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: tooMany("Too many attempts. Please wait a few minutes and try again."),
+});
+
+module.exports = {
+  loginLimiter,
+  signupLimiter,
+  verifyEmailLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+};
