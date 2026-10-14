@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     entry("/", posts.length ? newest : null),
     entry("/recipes", posts.length ? newest : null),
     entry("/about"),
+    entry("/privacy"),
     ...usedCuisines.map((c) => entry(`/recipes?cuisine=${encodeURIComponent(c.toLowerCase())}`)),
     ...posts.map((p) => entry(recipePath(p), p.dateUpdated || p.dateCreated)),
     ...authors.map((a) => entry(`/author/${a}`)),

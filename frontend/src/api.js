@@ -170,6 +170,17 @@ export async function getUsers() {
   return response.data;
 }
 
+export async function exportMyData() {
+  const response = await axios.get(`${URL}/users/me/export`);
+  return response.data;
+}
+
+// Deleting your own account needs your password
+export async function deleteMyAccount(id, password) {
+  const response = await axios.delete(`${URL}/users/${id}`, { data: { password } });
+  return response.data;
+}
+
 export async function deleteUser(id) {
   const response = await axios.delete(`${URL}/users/${id}`);
   return response.data;

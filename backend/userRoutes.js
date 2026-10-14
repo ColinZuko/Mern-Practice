@@ -35,6 +35,7 @@ function passwordProblem(password) {
 // Never send password hashes or verification tokens back to the client
 const HIDE_PASSWORD = { projection: { password: 0, verifyTokenHash: 0, verifyTokenExpires: 0, resetTokenHash: 0, resetTokenExpires: 0 } };
 const RESEND_COOLDOWN_MS = 60 * 1000;
+const FORMER_CONTRIBUTOR = "Former contributor";
 
 // Accounts created before email verification existed have no flag and count as verified
 function isVerified(user) {
@@ -104,6 +105,58 @@ userRoutes.route("/users/me/saved/:postId").post(verifyToken, async (request, re
 
     const updated = await db.collection("users").findOne({ _id: userId }, { projection: { saved: 1 } });
     response.json({ saved: updated.saved || [] });
+});
+
+//#1c2 - Download everything the site stores about you (GDPR right of access / portability)
+userRoutes.route("/users/me/export").get(verifyToken, async (request, response) => {
+    if (!ObjectId.isValid(request.user._id)) {
+        return response.status(401).json({ message: "Invalid account" });
+    }
+    let db = database.getDb();
+    const user = await db.collection("users").findOne(
+        { _id: new ObjectId(request.user._id) },
+        { projection: { password: 0, verifyTokenHash: 0, verifyTokenExpires: 0, resetTokenHash: 0, resetTokenExpires: 0 } }
+    );
+    if (!user) {
+        return response.status(404).json({ message: "User not found" });
+    }
+
+    const userId = String(user._id);
+    const idsToObjectIds = (ids) => (ids || []).filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const titles = async (ids) =>
+        (await db.collection("posts").find({ _id: { $in: idsToObjectIds(ids) } }, { projection: { title: 1 } }).toArray())
+            .map((p) => ({ id: String(p._id), title: p.title }));
+
+    const comments = await db.collection("comments").find({ author: userId }).sort({ dateCreated: 1 }).toArray();
+    const commentPosts = await titles([...new Set(comments.map((c) => c.postId))]);
+    const recipes = await db.collection("posts")
+        .find({ author: userId }, { projection: { title: 1, description: 1, dateCreated: 1, dateUpdated: 1 } })
+        .toArray();
+
+    const data = {
+        exportedAt: new Date(),
+        account: {
+            id: userId,
+            name: user.name,
+            email: user.email,
+            joinDate: user.joinDate,
+            role: user.role || "user",
+            emailVerified: isVerified(user),
+            emailVerifiedAt: user.emailVerifiedAt,
+            passwordChangedAt: user.passwordChangedAt,
+        },
+        savedRecipes: await titles(user.saved),
+        likedRecipes: await titles(user.liked),
+        comments: comments.map((c) => ({
+            recipe: commentPosts.find((p) => p.id === c.postId)?.title || "(deleted recipe)",
+            text: c.text,
+            date: c.dateCreated,
+        })),
+        publishedRecipes: recipes.map((r) => ({ id: String(r._id), title: r.title, description: r.description, published: r.dateCreated, updated: r.dateUpdated })),
+    };
+
+    response.set("Content-Disposition", 'attachment; filename="pickle-and-pan-my-data.json"');
+    response.json(data);
 });
 
 //#1d - Confirm an email address with the token from the verification link
@@ -335,8 +388,21 @@ userRoutes.route("/users/:id/role").patch(requireRole("admin"), async (request, 
     response.json({ success: true, role });
 });
 
-//#5 - Delete a user: your own account, or anyone's if you're an admin.
-// Their recipes stay published under their name; admins can remove those separately.
+// Removes everything personal tied to an account (GDPR right to erasure):
+// comments are deleted, likes are taken back, and published recipes stay online
+// but are credited to "Former contributor" instead of the person's name.
+async function removeAccount(db, user) {
+    const userId = String(user._id);
+    await db.collection("comments").deleteMany({ author: userId });
+    const liked = (user.liked || []).filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    if (liked.length) {
+        await db.collection("posts").updateMany({ _id: { $in: liked }, likes: { $gt: 0 } }, { $inc: { likes: -1 } });
+    }
+    await db.collection("posts").updateMany({ author: userId }, { $set: { authorName: FORMER_CONTRIBUTOR } });
+    return db.collection("users").deleteOne({ _id: user._id });
+}
+
+//#5 - Delete a user: your own account (with your password), or anyone's if you're an admin.
 userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => {
     if (!ObjectId.isValid(request.params.id) || !ObjectId.isValid(request.user._id)) {
         return response.status(400).json({ message: "Invalid user ID format" });
@@ -354,16 +420,23 @@ userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => 
         return response.status(403).json({ message: "Unauthorized to delete this user" });
     }
 
-    const target = await users.findOne({ _id: new ObjectId(request.params.id) }, { projection: { role: 1 } });
+    const target = await users.findOne({ _id: new ObjectId(request.params.id) }, { projection: { role: 1, liked: 1, password: 1 } });
     if (!target) {
         return response.status(404).json({ message: "User not found" });
+    }
+    // Deleting your own account needs your password, so a forgotten open session can't do it
+    if (isSelf) {
+        const password = typeof request.body?.password === "string" ? request.body.password : "";
+        if (!password || !(await bcrypt.compare(password, target.password))) {
+            return response.status(401).json({ message: "That password isn't right" });
+        }
     }
     // Never remove the last admin, or nobody could manage the site any more
     if (target.role === "admin" && (await users.countDocuments({ role: "admin" })) <= 1) {
         return response.status(400).json({ message: "You can't remove the only admin" });
     }
 
-    let data = await users.deleteOne({ _id: target._id });
+    let data = await removeAccount(db, target);
     response.json({ success: true, deletedCount: data.deletedCount });
 });
 

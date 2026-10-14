@@ -15,6 +15,7 @@ import { NotFound } from "./pages/NotFound";
 import { VerifyEmail } from "./pages/VerifyEmail";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
+import { Privacy } from "./pages/Privacy";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
 import { AnalyticsTracker } from "./components/AnalyticsTracker";
@@ -43,6 +44,7 @@ function App() {
             <Route path="/readblog/:id" element={<OldRecipeAddress />} />
             <Route path="/author/:id" element={<Author />} />
             <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />

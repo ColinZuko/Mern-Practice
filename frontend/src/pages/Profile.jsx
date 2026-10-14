@@ -6,6 +6,7 @@ import { useAuth } from "../useAuth";
 import { BlogCard } from "../components/BlogCard";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
 import { useSeo } from "../useSeo";
+import { YourData } from "../components/YourData";
 
 const ROLE_DESCRIPTIONS = {
   admin: "You can write recipes, edit or remove any post, and manage user roles.",
@@ -141,6 +142,8 @@ export function Profile() {
           </div>
         )}
       </section>
+
+      <YourData />
     </div>
   );
 }

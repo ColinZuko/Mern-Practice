@@ -1,6 +1,6 @@
 import { createUser, verifyUser } from "../api";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../useAuth";
 import { authButtonClass, authInputClass, authLabelClass } from "./Login";
 import { PasswordInput } from "./PasswordInput";
@@ -98,6 +98,10 @@ export function CreateUser() {
       <button type="submit" disabled={isSubmitting} className={authButtonClass}>
         {isSubmitting ? "Creating account…" : "Create account"}
       </button>
+      <p className="text-center text-xs text-muted-foreground">
+        By creating an account you agree to how we handle your data, as explained in our{" "}
+        <Link to="/privacy" className="font-medium text-primary hover:underline">privacy policy</Link>.
+      </p>
     </form>
   );
 }
