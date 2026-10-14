@@ -69,7 +69,7 @@ const shareImageCache = new Map();
 const SHARE_CACHE_SIZE = 30;
 
 //#1c - Share image for link previews (WhatsApp, Facebook, Google): a 1200x630 JPEG, the size
-// and format every app supports, cropped around the most interesting part of the photo - public
+// and format every app supports, cropped from the centre (where the dish usually is) - public
 awsRoutes.route("/images/:id/og").get(async (request, response) => {
   const id = request.params.id;
   try {
@@ -79,7 +79,7 @@ awsRoutes.route("/images/:id/og").get(async (request, response) => {
       const original = Buffer.from(await data.Body.transformToByteArray());
       jpeg = await sharp(original)
         .rotate()
-        .resize(1200, 630, { fit: "cover", position: sharp.strategy.attention })
+        .resize(1200, 630, { fit: "cover", position: "centre" })
         .jpeg({ quality: 80, mozjpeg: true })
         .toBuffer();
       shareImageCache.set(id, jpeg);

@@ -42,7 +42,8 @@ export function describe(text = "", max = 155) {
 }
 
 export function recipeImage(post, apiUrl = BACKEND_URL) {
-  return post.imageId ? `${apiUrl}/images/${encodeURIComponent(post.imageId)}/og` : DEFAULT_IMAGE;
+  // ?v= changes when the share image format changes, so apps fetch the new one instead of a cached copy
+  return post.imageId ? `${apiUrl}/images/${encodeURIComponent(post.imageId)}/og?v=2` : DEFAULT_IMAGE;
 }
 
 export function recipeTitle(post) {
