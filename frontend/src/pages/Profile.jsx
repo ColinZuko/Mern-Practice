@@ -50,8 +50,9 @@ export function Profile() {
   }
 
   function handleLogout() {
-    logout();
+    // Leave the page first, so account-only pages don't redirect to sign-in on the way out
     navigate("/");
+    logout();
   }
 
   return (

@@ -1,16 +1,13 @@
 import axios from "axios";
-import { getToken } from "./auth";
 
 const URL = import.meta.env.VITE_API_URL || "";
 export const API_URL = URL;
 
-axios.interceptors.request.use((config) => {
-  const token = getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// The login session is an httpOnly cookie set by the API: send it with every request.
+// The X-Requested-With header proves a request comes from this site (protection against
+// other websites making changes with your cookie).
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common["X-Requested-With"] = "XMLHttpRequest";
 
 // Direct link to a post's image; the browser loads and caches it like any normal image
 export function imageUrl(imageId) {
@@ -135,6 +132,10 @@ export async function toggleSaved(postId) {
   return response.data.saved;
 }
 
+export async function logoutRequest() {
+  await axios.post(`${URL}/users/logout`);
+}
+
 export async function verifyEmail(token) {
   const response = await axios.post(`${URL}/users/verify-email`, { token });
   return response.data;
@@ -196,12 +197,12 @@ export async function createUser(user) {
   return response;
 }
 
-// Returns { token } on success or { error } with a message to show the user
+// Logs in (the server sets the session cookie). Returns { success: true } or { error } to show.
 export async function verifyUser(user) {
   try {
     const response = await axios.post(`${URL}/users/login`, user);
     if (response.data.success) {
-      return { token: response.data.token };
+      return { success: true };
     }
     return { error: response.data.message || "Invalid email or password" };
   } catch (error) {

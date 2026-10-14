@@ -27,7 +27,7 @@ function navClass({ isActive }) {
 }
 
 export function Navbar() {
-  const { user, isLoggedIn, role, canWrite, isAdmin, logout } = useAuth();
+  const { user, ready, isLoggedIn, role, canWrite, isAdmin, logout } = useAuth();
   const { pathname } = useLocation();
   // Each menu remembers the page it was opened on, so it closes by itself after navigating
   const [openMenu, setOpenMenu] = useState(null);
@@ -62,8 +62,9 @@ export function Navbar() {
   }
 
   function handleLogout() {
-    logout();
+    // Leave the page first, so account-only pages don't redirect to sign-in on the way out
     navigate("/");
+    logout();
   }
 
   return (
@@ -158,13 +159,16 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : ready ? (
             <Link
               to="/login"
               className="hidden rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted md:block"
             >
               Sign in
             </Link>
+          ) : (
+            // Still checking for a session: keep the space so nothing jumps
+            <span className="hidden h-10 w-10 md:block" aria-hidden="true" />
           )}
 
           <button

@@ -6,11 +6,12 @@ import { useAuth } from "../useAuth";
 export function RequireAuth({ children, roles }) {
   const { isLoggedIn, role, ready } = useAuth();
 
+  // Until the server has answered we don't know yet whether someone is signed in
+  if (!ready) {
+    return <p className="py-32 text-center text-muted-foreground">Loading…</p>;
+  }
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
-  }
-  if (roles && !ready) {
-    return <p className="py-32 text-center text-muted-foreground">Loading…</p>;
   }
   if (roles && !roles.includes(role)) {
     return <Navigate to="/" replace />;

@@ -86,12 +86,22 @@ export function Privacy() {
         </Section>
 
         <Section title="Cookies and browser storage">
-          <p>Pickle &amp; Pan doesn't use cookies. It does store two things in your own browser:</p>
+          <p>Pickle &amp; Pan uses one cookie, and only when you sign in:</p>
           <ul>
-            <li>your <strong>login</strong>, which is removed when you close the tab and expires after one hour;</li>
-            <li>for editors, an unfinished <strong>recipe draft</strong>, so a refresh doesn't lose your work.</li>
+            <li>
+              <strong>pp_session</strong> keeps you signed in. It lasts 30 days (renewed while you keep using the
+              site) and is removed when you log out. It can't be read by scripts on the page and is only sent to our own
+              server over a secure connection.
+            </li>
           </ul>
-          <p>Both are needed for the site to work, so they don't require consent.</p>
+          <p>
+            For editors, an unfinished <strong>recipe draft</strong> is also kept in the browser, so a refresh doesn't
+            lose your work.
+          </p>
+          <p>
+            Both are needed for the site to work, so they don't require consent. We don't use tracking or advertising
+            cookies.
+          </p>
         </Section>
 
         <Section title="Who processes your data">

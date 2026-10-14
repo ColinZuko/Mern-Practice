@@ -2,8 +2,7 @@ const express = require('express');
 const database = require('./connect');
 const ObjectId = require('mongodb').ObjectId;
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { ROLES, verifyToken, requireRole } = require('./auth');
+const { ROLES, verifyToken, requireRole, setSessionCookie, clearSessionCookie } = require('./auth');
 const { createVerificationToken, createResetToken, hashToken, sendVerificationEmail, sendPasswordResetEmail } = require('./email');
 const { loginLimiter, signupLimiter, verifyEmailLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require('./limits');
 require('dotenv').config({ path: require('path').join(__dirname, 'config.env') });
@@ -77,6 +76,10 @@ userRoutes.route("/users/me").get(verifyToken, async (request, response) => {
     let db = database.getDb();
     let data = await db.collection("users").findOne({ _id: new ObjectId(request.user._id) }, HIDE_PASSWORD);
     if (data) {
+        // Keep active people signed in: renew the 30-day cookie at most once a day
+        if (request.tokenFromCookie && Date.now() - request.user.iat * 1000 > 24 * 60 * 60 * 1000) {
+            setSessionCookie(response, data);
+        }
         response.json(withRole(data));
     } else {
         response.status(404).json({ message: "User not found" });
@@ -437,7 +440,14 @@ userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => 
     }
 
     let data = await removeAccount(db, target);
+    if (isSelf) clearSessionCookie(response);
     response.json({ success: true, deletedCount: data.deletedCount });
+});
+
+//5b - Log out: remove the session cookie
+userRoutes.route("/users/logout").post((request, response) => {
+    clearSessionCookie(response);
+    response.json({ success: true });
 });
 
 //6 - Login
@@ -458,9 +468,9 @@ userRoutes.route("/users/login").post(loginLimiter, async (request, response) =>
                 const stronger = await bcrypt.hash(password, SALT_ROUNDS);
                 await db.collection("users").updateOne({ _id: user._id }, { $set: { password: stronger } });
             }
-                // Only sign the fields you need, keeping the password hash out of the token
-                const token = jwt.sign( { _id: user._id, email: user.email, name: user.name, joinDate: user.joinDate, role: user.role || "user" } , process.env.SECRETKEY, { expiresIn: '1h' });
-            response.json({ success: true, token });
+            // The session goes into an httpOnly cookie, so it's never handed to the page's JavaScript
+            setSessionCookie(response, user);
+            response.json({ success: true });
         }else {
             // Same message for both cases so the login form can't be used to discover which emails have accounts.
             // 401 also lets the rate limiter count this as a failed attempt.

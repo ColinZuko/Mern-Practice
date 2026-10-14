@@ -29,11 +29,11 @@ export function Login() {
     e.preventDefault();
     setErrorMessage("");
     setIsSubmitting(true);
-    const { token, error } = await verifyUser(user);
+    const { success, error } = await verifyUser(user);
     setIsSubmitting(false);
 
-    if (token) {
-      await login(token);
+    if (success) {
+      await login();
       navigate("/");
     } else {
       setErrorMessage(error);

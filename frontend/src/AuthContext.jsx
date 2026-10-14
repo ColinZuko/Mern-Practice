@@ -1,34 +1,35 @@
-import { useCallback, useEffect, useState } from "react";
-import { getCurrentUser, getToken, logout as clearToken, saveToken } from "./auth";
-import { getMe, toggleLike as toggleLikeRequest, toggleSaved } from "./api";
+import { startTransition, useCallback, useEffect, useState } from "react";
+import { getMe, logoutRequest, toggleLike as toggleLikeRequest, toggleSaved } from "./api";
 import { AuthContext } from "./useAuth";
 
-// Fetches the account (current role, saved recipes) from the server.
-// Returns the account, null if the token was rejected, or undefined if the server couldn't be reached.
+// Asks the server who is signed in (the session is an httpOnly cookie the page can't read).
+// Returns the account, null when nobody is signed in, or undefined if the server couldn't be reached.
 async function loadAccount() {
   try {
     return await getMe();
   } catch (error) {
-    if (error.response && [401, 403, 404].includes(error.response.status)) {
-      clearToken();
-      return null;
-    }
+    if (error.response && [401, 403, 404].includes(error.response.status)) return null;
     return undefined;
   }
 }
 
 export function AuthProvider({ children }) {
-  // Start from the token so the UI is right immediately, then confirm with the server
-  const [user, setUser] = useState(() => getCurrentUser());
-  // False until the server has confirmed the account's current role
-  const [ready, setReady] = useState(() => !getToken());
+  const [user, setUser] = useState(null);
+  // False until the server has told us whether there's a session
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) return;
+    // Logins used to be kept in sessionStorage; that's no longer used
+    try {
+      sessionStorage.removeItem("User");
+    } catch {
+      // storage unavailable
+    }
+
     let cancelled = false;
     loadAccount().then((account) => {
       if (cancelled) return;
-      if (account !== undefined) setUser(account);
+      setUser(account ?? null);
       setReady(true);
     });
     return () => {
@@ -36,9 +37,8 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  async function login(token) {
-    saveToken(token);
-    setUser(getCurrentUser());
+  // Call after the server has set the session cookie (login or sign-up)
+  async function login() {
     const account = await loadAccount();
     if (account !== undefined) setUser(account);
     setReady(true);
@@ -50,9 +50,15 @@ export function AuthProvider({ children }) {
     if (account !== undefined) setUser(account);
   }, []);
 
-  function logout() {
-    clearToken();
-    setUser(null);
+  async function logout() {
+    // Page changes in React Router are transitions; doing this as one too means a "go home,
+    // then log out" happens together, instead of account pages bouncing to sign-in first
+    startTransition(() => setUser(null));
+    try {
+      await logoutRequest();
+    } catch {
+      // Already signed out on the server (or it's unreachable); the page is signed out either way
+    }
   }
 
   async function toggleSave(postId) {
@@ -75,7 +81,6 @@ export function AuthProvider({ children }) {
     user,
     ready,
     isLoggedIn: !!user,
-    // Until the server answers, assume verified so the reminder banner doesn't flash
     isVerified: !!user && user.emailVerified !== false,
     role,
     canWrite: !!user && (role === "editor" || role === "admin"),

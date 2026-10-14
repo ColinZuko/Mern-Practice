@@ -29,9 +29,9 @@ export function CreateUser() {
     try {
       await createUser(user);
       // Sign the new account straight in
-      const { token } = await verifyUser({ email: user.email, password: user.password });
-      if (token) {
-        await login(token);
+      const { success } = await verifyUser({ email: user.email, password: user.password });
+      if (success) {
+        await login();
         navigate("/");
         return;
       }
