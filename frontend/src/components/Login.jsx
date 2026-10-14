@@ -2,6 +2,7 @@ import { verifyUser } from "../api";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../useAuth";
+import { PasswordInput } from "./PasswordInput";
 
 export const authLabelClass = "block text-sm font-medium";
 export const authInputClass =
@@ -61,14 +62,13 @@ export function Login() {
             Forgot password?
           </Link>
         </div>
-        <input
+        <PasswordInput
           id="login-password"
           onChange={handleChange}
           name="password"
-          type="password"
           autoComplete="current-password"
           required
-          maxLength={20}
+          maxLength={72}
           className={authInputClass}
         />
       </div>

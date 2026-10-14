@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../useAuth";
 import { authButtonClass, authInputClass, authLabelClass } from "./Login";
+import { PasswordInput } from "./PasswordInput";
 
 export function CreateUser() {
   const [user, setUser] = useState({
@@ -75,14 +76,13 @@ export function CreateUser() {
       </div>
       <div>
         <label htmlFor="signup-password" className={authLabelClass}>Password</label>
-        <input
+        <PasswordInput
           id="signup-password"
           onChange={handleChange}
           name="password"
-          type="password"
           autoComplete="new-password"
           required
-          maxLength={20}
+          maxLength={72}
           minLength={6}
           pattern="(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).*"
           title="Password must contain at least one uppercase letter, one number, and one symbol."

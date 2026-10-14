@@ -4,6 +4,7 @@ import { CircleCheck } from "lucide-react";
 import { resetPassword } from "../api";
 import { useAuth } from "../useAuth";
 import { authButtonClass, authInputClass, authLabelClass } from "../components/Login";
+import { PasswordInput } from "../components/PasswordInput";
 
 // Opened from the link in the password reset email
 export function ResetPassword() {
@@ -66,9 +67,8 @@ export function ResetPassword() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div>
           <label htmlFor="new-password" className={authLabelClass}>New password</label>
-          <input
+          <PasswordInput
             id="new-password"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
@@ -82,9 +82,8 @@ export function ResetPassword() {
         </div>
         <div>
           <label htmlFor="confirm-password" className={authLabelClass}>Repeat new password</label>
-          <input
+          <PasswordInput
             id="confirm-password"
-            type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             autoComplete="new-password"
