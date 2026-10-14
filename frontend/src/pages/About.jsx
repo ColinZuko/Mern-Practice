@@ -58,7 +58,7 @@ export function About() {
           />
           <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-6 text-white">
             <p className="font-serif text-xl font-semibold">
-              "recipes taste better when shared with others."
+              "Recipes taste better when shared with others."
             </p>
             <span className="mt-1 block text-sm text-white/75">
               — Colin Delsink
