@@ -19,6 +19,9 @@ function cleanString(value, maxLength) {
     return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Email addresses aren't case-sensitive: "Colin@x.com" and "colin@x.com" are the same account.
+// New addresses are stored in lowercase; this makes lookups also match older mixed-case ones.
+const ANY_CASE = { collation: { locale: "en", strength: 2 } };
 // Same rule as the sign-up form: 6+ characters with an uppercase letter, a number and a symbol
 function passwordProblem(password) {
     if (typeof password !== "string" || password.length < 6) return "Password must be at least 6 characters";
@@ -156,7 +159,7 @@ userRoutes.route("/users/forgot-password").post(forgotPasswordLimiter, async (re
         return response.status(400).json({ message: "Please enter a valid email address" });
     }
     let db = database.getDb();
-    const user = await db.collection("users").findOne({ email }, { projection: { name: 1, email: 1, resetSentAt: 1 } });
+    const user = await db.collection("users").findOne({ email }, { ...ANY_CASE, projection: { name: 1, email: 1, resetSentAt: 1 } });
 
     // At most one email a minute per account; extra requests quietly get the same answer
     const recentlySent = user?.resetSentAt && Date.now() - user.resetSentAt.getTime() < RESEND_COOLDOWN_MS;
@@ -228,7 +231,7 @@ userRoutes.route("/users").post(signupLimiter, async (request, response) => {
     let db = database.getDb();
 
     const name = cleanString(request.body.name, 40);
-    const email = cleanString(request.body.email, 100);
+    const email = cleanString(request.body.email, 100).toLowerCase();
     if (!name || !email) {
         return response.status(400).json({ message: "Name, email and password are required" });
     }
@@ -240,7 +243,7 @@ userRoutes.route("/users").post(signupLimiter, async (request, response) => {
         return response.status(400).json({ message: problem });
     }
 
-    const takenEmail = await db.collection("users").findOne({ email });
+    const takenEmail = await db.collection("users").findOne({ email }, ANY_CASE);
 
     if (takenEmail) {
         response.status(400).json({ message: "Email is already in use" });
@@ -277,14 +280,14 @@ userRoutes.route("/users/:id").put(verifyToken, async (request, response) => {
 
     let changes = {};
     const name = cleanString(request.body.name, 40);
-    const email = cleanString(request.body.email, 100);
+    const email = cleanString(request.body.email, 100).toLowerCase();
     if (name) changes.name = name;
-    const emailChanged = !!email && email !== current.email;
+    const emailChanged = !!email && email !== current.email.toLowerCase();
     if (emailChanged) {
         if (!EMAIL_PATTERN.test(email)) {
             return response.status(400).json({ message: "Please enter a valid email address" });
         }
-        if (await db.collection("users").findOne({ email })) {
+        if (await db.collection("users").findOne({ email, _id: { $ne: userId } }, ANY_CASE)) {
             return response.status(400).json({ message: "Email is already in use" });
         }
         changes.email = email;
@@ -370,7 +373,7 @@ userRoutes.route("/users/login").post(loginLimiter, async (request, response) =>
 
     const email = cleanString(request.body.email, 100);
     const password = typeof request.body.password === "string" ? request.body.password : "";
-    const user = email ? await db.collection("users").findOne({ email }) : null;
+    const user = email ? await db.collection("users").findOne({ email }, ANY_CASE) : null;
 
     // Always run a password check so failed logins take as long whether or not the email exists
     const confirmation = await bcrypt.compare(password, user ? user.password : DUMMY_HASH);

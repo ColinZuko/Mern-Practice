@@ -17,7 +17,7 @@ async function main() {
     const result = await client
       .db(process.env.DB_NAME || "BlogData")
       .collection("users")
-      .updateOne({ email }, { $set: { role } });
+      .updateOne({ email }, { $set: { role } }, { collation: { locale: "en", strength: 2 } });
 
     if (result.matchedCount === 0) {
       console.log(`No user found with email ${email}`);
