@@ -77,6 +77,8 @@ export async function createPost(post) {
     cuisines: post.cuisines,
     recipe: post.recipe,
     imageId,
+    // false = don't email subscribers about this recipe
+    notify: post.notify !== false,
   });
   return response;
 }
@@ -130,6 +132,17 @@ export async function getMe() {
 export async function toggleSaved(postId) {
   const response = await axios.post(`${URL}/users/me/saved/${postId}`);
   return response.data.saved;
+}
+
+export async function updateEmailPreferences(preferences) {
+  const response = await axios.patch(`${URL}/users/me/preferences`, preferences);
+  return response.data;
+}
+
+// From the link in a new-recipe email; works without logging in
+export async function unsubscribe(userId, token) {
+  const response = await axios.post(`${URL}/users/unsubscribe`, { u: userId, t: token });
+  return response.data;
 }
 
 export async function logoutRequest() {

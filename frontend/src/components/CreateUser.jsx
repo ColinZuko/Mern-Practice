@@ -10,6 +10,7 @@ export function CreateUser() {
     name: "",
     email: "",
     password: "",
+    notifyNewRecipes: false,
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,7 +19,8 @@ export function CreateUser() {
   const navigate = useNavigate();
 
   function handleChange(e) {
-    setUser({ ...user, [e.target.name]: e.target.value });
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setUser({ ...user, [e.target.name]: value });
   }
 
   async function handleSubmit(e) {
@@ -92,6 +94,16 @@ export function CreateUser() {
           At least 6 characters, with an uppercase letter, a number and a symbol.
         </p>
       </div>
+      <label className="flex cursor-pointer items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          name="notifyNewRecipes"
+          checked={user.notifyNewRecipes}
+          onChange={handleChange}
+          className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+        />
+        <span>Email me when a new recipe is published. You can turn this off any time.</span>
+      </label>
       {errorMessage && (
         <p className="text-sm font-medium text-destructive">{errorMessage}</p>
       )}

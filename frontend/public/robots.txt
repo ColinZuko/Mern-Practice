@@ -10,6 +10,7 @@ Disallow: /edit-post/
 Disallow: /verify-email
 Disallow: /forgot-password
 Disallow: /reset-password
+Disallow: /unsubscribe
 Disallow: /api/
 
 Sitemap: https://pickleandpan.com/sitemap.xml

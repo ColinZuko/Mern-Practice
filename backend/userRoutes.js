@@ -3,7 +3,7 @@ const database = require('./connect');
 const ObjectId = require('mongodb').ObjectId;
 const bcrypt = require('bcrypt');
 const { ROLES, verifyToken, requireRole, setSessionCookie, clearSessionCookie } = require('./auth');
-const { createVerificationToken, createResetToken, hashToken, sendVerificationEmail, sendPasswordResetEmail } = require('./email');
+const { createVerificationToken, createResetToken, hashToken, sendVerificationEmail, sendPasswordResetEmail, isValidUnsubscribeToken } = require('./email');
 const { loginLimiter, signupLimiter, verifyEmailLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require('./limits');
 require('dotenv').config({ path: require('path').join(__dirname, 'config.env') });
 
@@ -42,7 +42,7 @@ function isVerified(user) {
 }
 
 function withRole(user) {
-    return { ...user, role: user.role || "user", saved: user.saved || [], liked: user.liked || [], emailVerified: isVerified(user) };
+    return { ...user, role: user.role || "user", saved: user.saved || [], liked: user.liked || [], emailVerified: isVerified(user), notifyNewRecipes: user.notifyNewRecipes === true };
 }
 
 // Stores a fresh verification token for the user and emails them the link.
@@ -110,6 +110,46 @@ userRoutes.route("/users/me/saved/:postId").post(verifyToken, async (request, re
     response.json({ saved: updated.saved || [] });
 });
 
+//#1b2 - Email preferences of the logged-in user
+userRoutes.route("/users/me/preferences").patch(verifyToken, async (request, response) => {
+    if (!ObjectId.isValid(request.user._id)) {
+        return response.status(401).json({ message: "Invalid account" });
+    }
+    if (typeof request.body.notifyNewRecipes !== "boolean") {
+        return response.status(400).json({ message: "notifyNewRecipes must be true or false" });
+    }
+    let db = database.getDb();
+    const result = await db.collection("users").updateOne(
+        { _id: new ObjectId(request.user._id) },
+        { $set: { notifyNewRecipes: request.body.notifyNewRecipes } }
+    );
+    if (result.matchedCount === 0) {
+        return response.status(404).json({ message: "User not found" });
+    }
+    response.json({ notifyNewRecipes: request.body.notifyNewRecipes });
+});
+
+//#1b3 - Unsubscribe from new-recipe emails with the signed link from the email (no login needed).
+// POST is what Gmail/Outlook's one-click unsubscribe button sends; GET (someone opening the
+// link) is sent on to the site's unsubscribe page.
+async function unsubscribe(request, response) {
+    const userId = String(request.query.u || request.body?.u || "");
+    const token = String(request.query.t || request.body?.t || "");
+    if (!ObjectId.isValid(userId) || !isValidUnsubscribeToken(userId, token)) {
+        return response.status(400).json({ message: "This unsubscribe link isn't valid." });
+    }
+    let db = database.getDb();
+    await db.collection("users").updateOne({ _id: new ObjectId(userId) }, { $set: { notifyNewRecipes: false } });
+    // Same answer whether or not the account still exists
+    response.json({ success: true });
+}
+userRoutes.route("/users/unsubscribe").post(verifyEmailLimiter, unsubscribe);
+userRoutes.route("/users/unsubscribe").get((request, response) => {
+    const site = (process.env.SITE_URL || "https://pickleandpan.com").replace(/\/$/, "");
+    const query = new URLSearchParams({ u: String(request.query.u || ""), t: String(request.query.t || "") });
+    response.redirect(302, `${site}/unsubscribe?${query}`);
+});
+
 //#1c2 - Download everything the site stores about you (GDPR right of access / portability)
 userRoutes.route("/users/me/export").get(verifyToken, async (request, response) => {
     if (!ObjectId.isValid(request.user._id)) {
@@ -146,6 +186,7 @@ userRoutes.route("/users/me/export").get(verifyToken, async (request, response) 
             role: user.role || "user",
             emailVerified: isVerified(user),
             emailVerifiedAt: user.emailVerifiedAt,
+            emailMeAboutNewRecipes: user.notifyNewRecipes === true,
             passwordChangedAt: user.passwordChangedAt,
         },
         savedRecipes: await titles(user.saved),
@@ -313,6 +354,8 @@ userRoutes.route("/users").post(signupLimiter, async (request, response) => {
             joinDate: new Date(),
             role: "user",
             emailVerified: false,
+            // Opt-in only: new-recipe emails are off unless they ticked the box
+            notifyNewRecipes: request.body.notifyNewRecipes === true,
             saved: [],
             posts: []
         };

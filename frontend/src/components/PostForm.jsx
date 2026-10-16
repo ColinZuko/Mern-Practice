@@ -106,7 +106,7 @@ function readDraft(key) {
 
 // Shared by the create and edit pages. `initial` is the existing post when editing;
 // `draftKey` turns on saving unfinished work in this browser (used when creating).
-export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSubmit }) {
+export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSubmit, showNotify = false }) {
   const { user } = useAuth();
   const [draft] = useState(() => readDraft(draftKey));
   const start = draft || initial || {};
@@ -128,6 +128,7 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
   const [tab, setTab] = useState("write");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [notify, setNotify] = useState(true);
   const [preparingPhoto, setPreparingPhoto] = useState(false);
   const [draftRestored, setDraftRestored] = useState(!!draft);
   const inputFile = useRef(null);
@@ -223,7 +224,7 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
     setError("");
     setSubmitting(true);
     try {
-      await onSubmit({ title, description, content, cuisines, file, recipe });
+      await onSubmit({ title, description, content, cuisines, file, recipe, notify });
       if (draftKey) {
         try {
           localStorage.removeItem(draftKey);
@@ -511,6 +512,23 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
       )}
 
       {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+
+      {showNotify && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border bg-card p-4 text-sm">
+          <input
+            type="checkbox"
+            checked={notify}
+            onChange={(e) => setNotify(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-[var(--primary)]"
+          />
+          <span>
+            <span className="font-medium">Email subscribers</span>
+            <span className="block text-muted-foreground">
+              Everyone who asked to hear about new recipes gets an email with the photo, title and a taste of the recipe.
+            </span>
+          </span>
+        </label>
+      )}
 
       <div className="sticky bottom-0 z-10 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-4 backdrop-blur sm:mx-0 sm:rounded-2xl sm:border sm:px-6">
         <p className="hidden text-sm text-muted-foreground sm:block">

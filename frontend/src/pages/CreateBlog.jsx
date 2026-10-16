@@ -22,6 +22,7 @@ export function CreateBlog() {
       </header>
       <PostForm
         draftKey="pickleandpan:new-recipe-draft"
+        showNotify
         submitLabel="Publish recipe"
         submittingLabel="Publishing…"
         onSubmit={handleSubmit}

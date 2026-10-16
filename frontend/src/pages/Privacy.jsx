@@ -72,7 +72,10 @@ export function Privacy() {
             when you create an account (article 6(1)(b) GDPR).
           </p>
           <p>
-            We only email you to confirm your address or reset your password. We don't send newsletters or marketing.
+            We email you to confirm your address or reset your password. If you ticked the box (when signing up or in
+            your account settings), we also email you when a new recipe is published. That's based on your consent
+            (article 6(1)(a) GDPR): every email has a one-click unsubscribe link, and you can turn it off in your account
+            settings at any time. We don't send other marketing.
           </p>
         </Section>
 
@@ -111,7 +114,7 @@ export function Privacy() {
             <li><strong>Amazon Web Services (S3)</strong>: recipe photos and daily database backups, stored in the EU (Stockholm);</li>
             <li><strong>Render</strong>: runs the server behind the site;</li>
             <li><strong>Vercel</strong>: hosts the website and provides the cookie-free analytics;</li>
-            <li><strong>Resend</strong>: sends the confirmation and password-reset emails.</li>
+            <li><strong>Resend</strong>: sends the confirmation, password-reset and new-recipe emails.</li>
           </ul>
           <p>
             Some of these companies are based in the United States. Where data leaves the EU, they protect it with the

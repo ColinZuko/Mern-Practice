@@ -2,6 +2,32 @@ const express = require("express");
 const database = require("./connect");
 const ObjectId = require("mongodb").ObjectId;
 const { requireRole, verifyToken } = require("./auth");
+const { sendNewRecipeEmails } = require("./email");
+
+// Emails everyone who opted in about a newly published recipe (confirmed addresses only,
+// never the author). Runs after the response so publishing isn't slowed down.
+async function notifySubscribers(db, post) {
+  try {
+    const recipients = (await db
+      .collection("users")
+      .find(
+        { notifyNewRecipes: true, emailVerified: { $ne: false } },
+        { projection: { email: 1, name: 1 } },
+      )
+      .toArray())
+      .filter((u) => String(u._id) !== String(post.author))
+      .map((u) => ({ id: String(u._id), email: u.email, name: u.name }));
+
+    const sent = recipients.length ? await sendNewRecipeEmails(post, recipients) : 0;
+    await db.collection("posts").updateOne(
+      { _id: post._id },
+      { $set: { notifiedAt: new Date(), notifiedCount: sent, notifyRecipients: recipients.length } },
+    );
+    console.log(`New recipe "${post.title}": ${sent}/${recipients.length} subscriber emails sent`);
+  } catch (error) {
+    console.error("Sending new-recipe emails failed:", error);
+  }
+}
 
 let postRoutes = express.Router();
 
@@ -138,6 +164,11 @@ postRoutes
       };
       let data = await db.collection("posts").insertOne(mongoObject);
       response.json(data);
+
+      // The editor can untick "Email subscribers" when publishing
+      if (request.body.notify !== false) {
+        setImmediate(() => notifySubscribers(db, { ...mongoObject, _id: data.insertedId }));
+      }
     } catch (error) {
       console.error("Error creating post:", error);
       response

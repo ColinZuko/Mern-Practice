@@ -123,7 +123,107 @@ async function sendPasswordResetEmail({ to, name, token }) {
   });
 }
 
+// ---- New-recipe emails ----
+
+const API_URL = (process.env.API_URL || "https://api.pickleandpan.com").replace(/\/$/, "");
+const BATCH_SIZE = 100; // Resend's maximum per batch request
+
+// Signed link that unsubscribes one person without logging in. Signing it with the server
+// secret means nobody can unsubscribe someone else by guessing.
+function unsubscribeToken(userId) {
+  return crypto.createHmac("sha256", process.env.SECRETKEY).update(`unsubscribe:${userId}`).digest("hex").slice(0, 32);
+}
+
+function isValidUnsubscribeToken(userId, token) {
+  const expected = unsubscribeToken(userId);
+  return typeof token === "string" && token.length === expected.length &&
+    crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
+function shorten(text = "", max) {
+  const clean = String(text).replace(/\s+/g, " ").trim();
+  return clean.length <= max ? clean : `${clean.slice(0, max - 1).replace(/\s+\S*$/, "")}…`;
+}
+
+// A taste of the recipe: the intro, or else the first ingredients
+function recipeTeaser(post) {
+  if (post.content?.trim()) return shorten(post.content, 220);
+  const ingredients = (post.recipe?.ingredients || "")
+    .split("\n").map((l) => l.trim().replace(/^[-*•]\s*/, "")).filter((l) => l && !l.endsWith(":"));
+  return ingredients.length ? `You'll need: ${shorten(ingredients.slice(0, 6).join(", "), 200)}` : "";
+}
+
+function newRecipeEmail(post, recipient) {
+  const recipeUrl = `${SITE_URL}/recipe/${post._id}`;
+  const imageUrl = post.imageId ? `${API_URL}/images/${encodeURIComponent(post.imageId)}/og?v=2` : `${SITE_URL}/og-default.png`;
+  const query = `u=${recipient.id}&t=${unsubscribeToken(recipient.id)}`;
+  const unsubscribePage = `${SITE_URL}/unsubscribe?${query}`;
+  const teaser = recipeTeaser(post);
+  const by = post.authorName ? ` by ${post.authorName}` : "";
+
+  return {
+    from: EMAIL_FROM,
+    to: recipient.email,
+    subject: `New recipe: ${post.title}`,
+    // Lets Gmail, Outlook and Apple Mail show their own one-click unsubscribe button
+    headers: {
+      "List-Unsubscribe": `<${API_URL}/users/unsubscribe?${query}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
+    text: `New on Pickle & Pan: ${post.title}${by}\n\n${post.description || ""}\n\n${teaser}\n\nRead the recipe: ${recipeUrl}\n\nYou get this because you asked to hear about new recipes. Unsubscribe: ${unsubscribePage}`,
+    html: `
+      <div style="background: #fbf8f2; padding: 24px 12px;">
+        <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; font-family: Arial, sans-serif; color: #2b2622;">
+          <a href="${recipeUrl}"><img src="${imageUrl}" alt="${escapeHtml(post.title)}" width="560" style="display: block; width: 100%; height: auto; border: 0;"></a>
+          <div style="padding: 28px 28px 8px;">
+            <p style="margin: 0 0 8px; font-size: 12px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #4f1d3a;">New recipe${escapeHtml(by)}</p>
+            <h1 style="margin: 0 0 12px; font-family: Georgia, serif; font-size: 28px; line-height: 1.2;">${escapeHtml(post.title)}</h1>
+            ${post.description ? `<p style="margin: 0 0 12px; font-size: 16px; line-height: 1.6;">${escapeHtml(post.description)}</p>` : ""}
+            ${teaser ? `<p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #6b625b;">${escapeHtml(teaser)}</p>` : ""}
+            <p style="margin: 0 0 28px;">
+              <a href="${recipeUrl}" style="display: inline-block; background: #4f1d3a; color: #ffffff; padding: 12px 24px; border-radius: 999px; text-decoration: none; font-weight: bold;">Read the recipe</a>
+            </p>
+          </div>
+          <div style="padding: 16px 28px 24px; border-top: 1px solid #eee5d8; font-size: 12px; line-height: 1.6; color: #8a8178;">
+            You get this email because you asked Pickle &amp; Pan to tell you about new recipes.<br>
+            <a href="${unsubscribePage}" style="color: #4f1d3a;">Unsubscribe</a> or change it in your
+            <a href="${SITE_URL}/profile" style="color: #4f1d3a;">account settings</a>.
+          </div>
+        </div>
+      </div>`,
+  };
+}
+
+// Sends one personal email per subscriber (never one email with everyone in it).
+// Returns the number of emails Resend accepted.
+async function sendNewRecipeEmails(post, recipients) {
+  const emails = recipients.map((r) => newRecipeEmail(post, r));
+  if (!process.env.RESEND_API_KEY) {
+    for (const e of emails) {
+      console.log(`[email not sent: RESEND_API_KEY is not set]\nTo: ${e.to}\nSubject: ${e.subject}\nList-Unsubscribe: ${e.headers["List-Unsubscribe"]}\n${e.text}\n`);
+    }
+    return 0;
+  }
+
+  let sent = 0;
+  for (let i = 0; i < emails.length; i += BATCH_SIZE) {
+    const batch = emails.slice(i, i + BATCH_SIZE);
+    const response = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(batch),
+    });
+    if (response.ok) sent += batch.length;
+    else console.error("Resend rejected a batch of recipe emails:", response.status, await response.text());
+  }
+  return sent;
+}
+
 module.exports = {
+  newRecipeEmail,
+  unsubscribeToken,
+  isValidUnsubscribeToken,
+  sendNewRecipeEmails,
   createVerificationToken,
   createResetToken,
   hashToken,
