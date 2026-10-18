@@ -3,6 +3,7 @@ import { ImagePlus } from "lucide-react";
 import { imageUrl } from "../api";
 import { useAuth } from "../useAuth";
 import { RecipeContent } from "./RecipeContent";
+import { GroupedListField } from "./GroupedListField";
 import { resizeImage } from "../lib/resizeImage";
 import {
   celsiusToFahrenheit,
@@ -23,7 +24,8 @@ const hintClass = "mt-1 text-xs text-muted-foreground";
 const fieldClass =
   "mt-2 w-full rounded-xl border bg-background px-4 py-3 outline-none transition placeholder:text-muted-foreground/60 focus:border-primary/40 focus:ring-2 focus:ring-ring/20";
 
-const INGREDIENTS_PLACEHOLDER = `500g 00 flour
+const INGREDIENTS_PLACEHOLDER = `For the dough:
+500g 00 flour
 2 tsp instant yeast
 2 tsp salt
 420ml lukewarm water
@@ -447,39 +449,37 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
           <Section
             number="3"
             title="Ingredients"
-            description="One ingredient per line. End a line with a colon to start a group, like “For the sauce:”."
+            description="One ingredient per line. Split them into groups (like the sauce and the filling) with a group heading: a line ending in a colon, such as “For the sauce:”."
           >
-            <div>
-              <textarea
-                id="ingredients"
-                aria-label="Ingredients"
-                value={recipe.ingredients}
-                onChange={(e) => setField("ingredients")(e.target.value)}
-                maxLength={10000}
-                placeholder={INGREDIENTS_PLACEHOLDER}
-                className={`${fieldClass} min-h-[260px] leading-7`}
-              />
-              <p className={hintClass}>{ingredientCount} {ingredientCount === 1 ? "ingredient" : "ingredients"}</p>
-            </div>
+            <GroupedListField
+              id="ingredients"
+              label="Ingredients"
+              value={recipe.ingredients}
+              onChange={setField("ingredients")}
+              maxLength={10000}
+              placeholder={INGREDIENTS_PLACEHOLDER}
+              exampleHeading="For the sauce"
+              countLabel={["ingredient", "ingredients"]}
+              className={`${fieldClass} min-h-[260px] leading-7`}
+            />
           </Section>
 
           <Section
             number="4"
             title="Method"
-            description="One step per line. Steps are numbered for you, so no need to type 1, 2, 3."
+            description="One step per line; they're numbered for you. Group steps with a heading too, such as “Make the filling:”."
           >
-            <div>
-              <textarea
-                id="method"
-                aria-label="Method"
-                value={recipe.method}
-                onChange={(e) => setField("method")(e.target.value)}
-                maxLength={20000}
-                placeholder={METHOD_PLACEHOLDER}
-                className={`${fieldClass} min-h-[300px] leading-7`}
-              />
-              <p className={hintClass}>{stepCount} {stepCount === 1 ? "step" : "steps"}</p>
-            </div>
+            <GroupedListField
+              id="method"
+              label="Method"
+              value={recipe.method}
+              onChange={setField("method")}
+              maxLength={20000}
+              placeholder={METHOD_PLACEHOLDER}
+              exampleHeading="Make the sauce"
+              countLabel={["step", "steps"]}
+              className={`${fieldClass} min-h-[300px] leading-7`}
+            />
           </Section>
 
           <Section number="5" title="Extras" description="Optional, but they make a recipe feel personal.">

@@ -62,7 +62,7 @@ export function YourData() {
         <div className="rounded-2xl border bg-card p-6">
           <h3 className="font-sans text-base font-semibold">Download your data</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            A file with your account details, saved and liked recipes, comments and published recipes.
+            A file with your account details, saved recipes, ratings, comments and published recipes.
           </p>
           <button
             type="button"
@@ -77,7 +77,7 @@ export function YourData() {
         <div className="rounded-2xl border border-destructive/30 bg-card p-6">
           <h3 className="font-sans text-base font-semibold text-destructive">Delete your account</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Removes your account, saved recipes, likes and comments. Recipes you published stay online as
+            Removes your account, saved recipes, ratings and comments. Recipes you published stay online as
             "Former contributor".
           </p>
           {confirming ? (

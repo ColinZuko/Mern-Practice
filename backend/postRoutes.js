@@ -201,49 +201,6 @@ postRoutes.route("/posts/:id/view").patch(async (request, response) => {
   }
 });
 
-//#3c - Like or un-like a post - signed in with a confirmed email.
-// Only the count is public; who liked what is kept on each user's own account.
-postRoutes.route("/posts/:id/like").post(verifyToken, async (request, response) => {
-  if (!isValidId(request.params.id) || !isValidId(request.user._id)) {
-    return response.status(400).json({ message: "Invalid ID format" });
-  }
-  try {
-    let db = database.getDb();
-    const users = db.collection("users");
-    const posts = db.collection("posts");
-    const userId = new ObjectId(request.user._id);
-    const postId = request.params.id;
-
-    const user = await users.findOne({ _id: userId }, { projection: { liked: 1, emailVerified: 1 } });
-    if (!user) {
-      return response.status(401).json({ message: "Account no longer exists" });
-    }
-    if (user.emailVerified === false) {
-      return response.status(403).json({ message: "Please confirm your email address to like recipes" });
-    }
-    const post = await posts.findOne({ _id: new ObjectId(postId) }, { projection: { _id: 1 } });
-    if (!post) {
-      return response.status(404).json({ message: "Post not found" });
-    }
-
-    // Only change the count when the user's list actually changed, so double clicks can't inflate it
-    const alreadyLiked = (user.liked || []).includes(postId);
-    if (alreadyLiked) {
-      const result = await users.updateOne({ _id: userId, liked: postId }, { $pull: { liked: postId } });
-      if (result.modifiedCount) await posts.updateOne({ _id: post._id, likes: { $gt: 0 } }, { $inc: { likes: -1 } });
-    } else {
-      const result = await users.updateOne({ _id: userId, liked: { $ne: postId } }, { $addToSet: { liked: postId } });
-      if (result.modifiedCount) await posts.updateOne({ _id: post._id }, { $inc: { likes: 1 } });
-    }
-
-    const updated = await posts.findOne({ _id: post._id }, { projection: { likes: 1 } });
-    response.json({ liked: !alreadyLiked, likes: updated.likes || 0 });
-  } catch (error) {
-    console.error("Error toggling like:", error);
-    response.status(500).json({ message: "Server error" });
-  }
-});
-
 //#4 - Update a post - its author (editor) or any admin
 postRoutes
   .route("/posts/:id")
@@ -311,14 +268,12 @@ postRoutes
       }
 
       let data = await db.collection("posts").deleteOne({ _id: postId });
-      // Remove it from everyone's saved and liked lists, and delete its comments
+      // Remove it from everyone's saved lists, and delete its comments and ratings
       await db
         .collection("users")
-        .updateMany(
-          { $or: [{ saved: request.params.id }, { liked: request.params.id }] },
-          { $pull: { saved: request.params.id, liked: request.params.id } },
-        );
+        .updateMany({ saved: request.params.id }, { $pull: { saved: request.params.id } });
       await db.collection("comments").deleteMany({ postId: request.params.id });
+      await db.collection("ratings").deleteMany({ postId: request.params.id });
 
       response.json({ success: true, message: "Post deleted successfully", data });
     } catch (error) {

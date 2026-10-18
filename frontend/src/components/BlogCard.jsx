@@ -66,12 +66,15 @@ function Eyebrow({ post }) {
   );
 }
 
-function Likes({ post }) {
-  if (!post.likes) return null;
+function Rating({ post }) {
+  if (!post.ratingCount) return null;
   return (
-    <span className="inline-flex items-center gap-1" title={`${post.likes} ${post.likes === 1 ? "like" : "likes"}`}>
-      <BreadIcon filled className="h-3.5 w-3.5" />
-      {post.likes}
+    <span
+      className="inline-flex items-center gap-1"
+      title={`${post.ratingAverage.toFixed(1)} out of 5 from ${post.ratingCount} ${post.ratingCount === 1 ? "rating" : "ratings"}`}
+    >
+      <BreadIcon variant="full" className="h-3.5 w-3.5" />
+      {post.ratingAverage.toFixed(1)}
     </span>
   );
 }
@@ -84,8 +87,8 @@ function Meta({ post }) {
       {formatDate(post.dateCreated)}
       <span className="mx-1.5">·</span>
       {readingTime(postText(post))} min read
-      {post.likes > 0 && <span className="mx-1.5">·</span>}
-      <Likes post={post} />
+      {post.ratingCount > 0 && <span className="mx-1.5">·</span>}
+      <Rating post={post} />
     </p>
   );
 }
@@ -133,7 +136,7 @@ export function BlogCard({ post, variant = "default", rank }) {
           </h3>
           <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
             {post.authorName || "Unknown author"} · {post.views || 0} views
-            {post.likes > 0 && <>· <Likes post={post} /></>}
+            {post.ratingCount > 0 && <>· <Rating post={post} /></>}
           </p>
         </div>
         <div className="shrink-0 overflow-hidden rounded-lg">

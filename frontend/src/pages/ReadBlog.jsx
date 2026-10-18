@@ -8,7 +8,7 @@ import { useAuth } from "../useAuth";
 import { BlogCard, PostImage } from "../components/BlogCard";
 import { SaveButton } from "../components/SaveButton";
 import { RecipeContent } from "../components/RecipeContent";
-import { LikeButton } from "../components/LikeButton";
+import { RateRecipe, RatingSummary } from "../components/BreadRating";
 import { Comments } from "../components/Comments";
 import { cuisineLabel, formatDate, hasRecipe, initials, postText, readingTime } from "../lib/recipes";
 
@@ -61,7 +61,10 @@ export function ReadBlog() {
   }, [id]);
 
   const current = loaded.id === id ? loaded : { post: null, related: [], notFound: !id };
-  const { post, related, notFound } = current;
+  const { related, notFound } = current;
+  // A new rating updates the average shown on the page straight away
+  const [ratingUpdate, setRatingUpdate] = useState({ id: null });
+  const post = current.post && ratingUpdate.id === id ? { ...current.post, ...ratingUpdate.summary } : current.post;
 
   // Keep one address per recipe: add or update the title part (e.g. after the title was edited)
   const canonicalPath = post ? recipePath(post) : null;
@@ -164,6 +167,8 @@ export function ReadBlog() {
             </span>
           </Link>
           <span className="hidden h-8 border-l sm:block" />
+          <RatingSummary average={post.ratingAverage || 0} count={post.ratingCount || 0} />
+          <span className="hidden h-8 border-l sm:block" />
           <span className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" /> {readingTime(postText(post))} min read
@@ -188,7 +193,6 @@ export function ReadBlog() {
               <ArrowDown className="h-4 w-4" /> Jump to recipe
             </a>
           )}
-          <LikeButton key={post._id} postId={post._id} initialCount={post.likes || 0} />
           <SaveButton postId={post._id} />
           <button
             type="button"
@@ -232,6 +236,8 @@ export function ReadBlog() {
       <div className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         <RecipeContent post={post} />
       </div>
+
+      <RateRecipe post={post} onChange={(summary) => setRatingUpdate({ id, summary })} />
 
       <Comments post={post} />
 

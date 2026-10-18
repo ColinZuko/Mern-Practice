@@ -106,6 +106,9 @@ export function recipeStructuredData(post, apiUrl = BACKEND_URL) {
     keywords: (post.cuisines || []).map(cuisineLabel).join(", ") || undefined,
     recipeIngredient: items(r.ingredients),
     recipeInstructions: items(r.method).map((text) => ({ "@type": "HowToStep", text })),
+    aggregateRating: post.ratingCount
+      ? { "@type": "AggregateRating", ratingValue: post.ratingAverage, ratingCount: post.ratingCount, bestRating: 5, worstRating: 1 }
+      : undefined,
   };
 }
 

@@ -7,6 +7,7 @@ const posts = require("./postRoutes");
 const users = require("./userRoutes");
 const awsRoutes = require("./awsRoutes");
 const comments = require("./commentRoutes");
+const { ratingRoutes } = require("./ratingRoutes");
 const adminRoutes = require("./adminRoutes");
 const { scheduleDailyBackups } = require("./backup");
 const multer = require("multer");
@@ -78,6 +79,7 @@ app.use(posts);
 app.use(users);
 app.use(awsRoutes);
 app.use(comments);
+app.use(ratingRoutes);
 app.use(adminRoutes);
 
 // Turn errors into short JSON messages instead of HTML pages with internal details

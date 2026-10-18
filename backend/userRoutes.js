@@ -4,6 +4,7 @@ const ObjectId = require('mongodb').ObjectId;
 const bcrypt = require('bcrypt');
 const { ROLES, verifyToken, requireRole, setSessionCookie, clearSessionCookie } = require('./auth');
 const { createVerificationToken, createResetToken, hashToken, sendVerificationEmail, sendPasswordResetEmail, isValidUnsubscribeToken } = require('./email');
+const { refreshRating } = require('./ratingRoutes');
 const { loginLimiter, signupLimiter, verifyEmailLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require('./limits');
 require('dotenv').config({ path: require('path').join(__dirname, 'config.env') });
 
@@ -42,7 +43,7 @@ function isVerified(user) {
 }
 
 function withRole(user) {
-    return { ...user, role: user.role || "user", saved: user.saved || [], liked: user.liked || [], emailVerified: isVerified(user), notifyNewRecipes: user.notifyNewRecipes === true };
+    return { ...user, role: user.role || "user", saved: user.saved || [], emailVerified: isVerified(user), notifyNewRecipes: user.notifyNewRecipes === true };
 }
 
 // Stores a fresh verification token for the user and emails them the link.
@@ -190,7 +191,11 @@ userRoutes.route("/users/me/export").get(verifyToken, async (request, response) 
             passwordChangedAt: user.passwordChangedAt,
         },
         savedRecipes: await titles(user.saved),
-        likedRecipes: await titles(user.liked),
+        ratings: await (async () => {
+            const mine = await db.collection("ratings").find({ userId }).toArray();
+            const named = await titles(mine.map((r) => r.postId));
+            return mine.map((r) => ({ recipe: named.find((p) => p.id === r.postId)?.title || "(deleted recipe)", rating: r.value, date: r.updatedAt }));
+        })(),
         comments: comments.map((c) => ({
             recipe: commentPosts.find((p) => p.id === c.postId)?.title || "(deleted recipe)",
             text: c.text,
@@ -435,15 +440,15 @@ userRoutes.route("/users/:id/role").patch(requireRole("admin"), async (request, 
 });
 
 // Removes everything personal tied to an account (GDPR right to erasure):
-// comments are deleted, likes are taken back, and published recipes stay online
+// comments and ratings are deleted (averages recalculated), and published recipes stay online
 // but are credited to "Former contributor" instead of the person's name.
 async function removeAccount(db, user) {
     const userId = String(user._id);
     await db.collection("comments").deleteMany({ author: userId });
-    const liked = (user.liked || []).filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
-    if (liked.length) {
-        await db.collection("posts").updateMany({ _id: { $in: liked }, likes: { $gt: 0 } }, { $inc: { likes: -1 } });
-    }
+    // (distinct isn't allowed under the strict Stable API, so read the post ids with find)
+    const rated = (await db.collection("ratings").find({ userId }, { projection: { postId: 1 } }).toArray()).map((r) => r.postId);
+    await db.collection("ratings").deleteMany({ userId });
+    for (const postId of rated) await refreshRating(db, postId);
     await db.collection("posts").updateMany({ author: userId }, { $set: { authorName: FORMER_CONTRIBUTOR } });
     return db.collection("users").deleteOne({ _id: user._id });
 }
@@ -466,7 +471,7 @@ userRoutes.route("/users/:id").delete(verifyToken, async (request, response) => 
         return response.status(403).json({ message: "Unauthorized to delete this user" });
     }
 
-    const target = await users.findOne({ _id: new ObjectId(request.params.id) }, { projection: { role: 1, liked: 1, password: 1 } });
+    const target = await users.findOne({ _id: new ObjectId(request.params.id) }, { projection: { role: 1, password: 1 } });
     if (!target) {
         return response.status(404).json({ message: "User not found" });
     }

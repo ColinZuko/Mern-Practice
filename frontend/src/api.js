@@ -45,9 +45,21 @@ export async function logView(id) {
   }
 }
 
-// Returns { liked, likes }
-export async function toggleLike(postId) {
-  const response = await axios.post(`${URL}/posts/${postId}/like`);
+// ---- Ratings (1-5 slices of bread) ----
+
+export async function getMyRating(postId) {
+  const response = await axios.get(`${URL}/posts/${postId}/rating`);
+  return response.data.value;
+}
+
+// Returns { ratingAverage, ratingCount, mine }
+export async function rateRecipe(postId, value) {
+  const response = await axios.put(`${URL}/posts/${postId}/rating`, { value });
+  return response.data;
+}
+
+export async function removeRating(postId) {
+  const response = await axios.delete(`${URL}/posts/${postId}/rating`);
   return response.data;
 }
 

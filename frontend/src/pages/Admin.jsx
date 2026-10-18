@@ -116,7 +116,7 @@ export function Admin() {
 
 ` +
         "Their account is deleted and they can no longer log in. " +
-        "Their comments and likes are removed; recipes they published stay online as \"Former contributor\". This can't be undone.",
+        "Their comments and ratings are removed; recipes they published stay online as \"Former contributor\". This can't be undone.",
     );
     if (!confirmed) return;
     try {

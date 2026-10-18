@@ -61,7 +61,7 @@ export function Privacy() {
             <li>your <strong>name</strong> and <strong>email address</strong>;</li>
             <li>your <strong>password</strong>, only as a secure one-way hash (nobody, including us, can read it);</li>
             <li>when you joined, your role (reader, editor or admin) and whether you confirmed your email address;</li>
-            <li>the recipes you <strong>save</strong> and <strong>like</strong> (other people only see the number of likes, not who liked);</li>
+            <li>the recipes you <strong>save</strong>, and the <strong>ratings</strong> you give (others only see each recipe's average, not who rated what);</li>
             <li>
               your <strong>comments</strong>, which are public and shown with your name;
             </li>
@@ -144,8 +144,7 @@ export function Privacy() {
             <li>For anything else, such as correcting your name or email, email {CONTACT}. We reply within a month.</li>
           </ul>
           <p>
-            When you delete your account, your account, saved recipes and comments are removed and your likes are taken
-            back. Recipes you published as an editor stay online, but are credited to "Former contributor" instead of
+            When you delete your account, your account, saved recipes, ratings and comments are removed. Recipes you published as an editor stay online, but are credited to "Former contributor" instead of
             your name. Want them removed too? Just ask.
           </p>
           <p>
