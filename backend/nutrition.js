@@ -125,11 +125,86 @@ function finish(text, amount, unit, toTaste) {
   const name = text
     .split(",")[0]
     .toLowerCase()
+    .trim()
+    .replace(/(\S)\s+(cut|sliced|chopped|diced|torn)\b.*$/, "$1") // "carrot cut in cm blocks"
     .replace(PREPARATION, " ")
+    .replace(/\b(leaves|leaf)\b/g, " ")
     .replace(/[^a-zÀ-ɏ' -]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return { amount, unit, name, toTaste };
+}
+
+// UK and everyday names -> the wording USDA uses, so the search finds the plain ingredient.
+// The first rule that matches wins.
+const SEARCH_NAMES = [
+  [/^(?:minced )?(beef|lamb|pork|turkey|chicken)(?: mince)$|^minced (beef|lamb|pork|turkey|chicken)$/, (m) => `${m[1] || m[2]} ground raw`],
+  [/^mince$/, "beef ground raw"],
+  [/^(plain |all purpose |all-purpose |00 |tipo |)flour$/, "wheat flour white all-purpose enriched"],
+  [/^self[- ]raising flour$/, "wheat flour white all-purpose self-rising"],
+  [/^(strong |bread |strong white bread )flour$/, "wheat flour white bread enriched"],
+  [/^(wholemeal|whole wheat|wholewheat) flour$/, "wheat flour whole-grain"],
+  [/^(bicarbonate of soda|bicarb|baking soda|bicarb soda)$/, "leavening agents baking soda"],
+  [/^baking powder$/, "leavening agents baking powder double-acting"],
+  [/^(instant |dried |fast[- ]action |active dry |)yeast$/, "leavening agents yeast baker's active dry"],
+  [/^(caster |granulated |white |)sugar$/, "sugars granulated"],
+  [/^(icing|powdered|confectioners) sugar$/, "sugars powdered"],
+  [/^(light |dark |soft |)brown sugar$/, "sugars brown"],
+  [/^(double|heavy|whipping) cream$/, "cream fluid heavy whipping"],
+  [/^(single|light) cream$/, "cream fluid light"],
+  [/^(creme fraiche|crème fraîche|sour cream)$/, "cream sour cultured"],
+  [/^(unsalted |salted |)butter$/, "butter salted"],
+  [/^(whole |full[- ]fat |semi[- ]skimmed |skimmed |)milk$/, "milk whole 3.25% milkfat"],
+  [/^(free[- ]range )?eggs?$/, "egg whole raw fresh"],
+  [/^egg yolks?$/, "egg yolk raw fresh"],
+  [/^egg whites?$/, "egg white raw fresh"],
+  [/^(extra virgin )?olive oil$/, "oil olive salad or cooking"],
+  [/^(vegetable|sunflower|rapeseed|canola) oil$/, "oil vegetable canola"],
+  [/^(sea |table |fine |kosher |flaky sea |rock |)salt$/, "salt table"],
+  [/^(black |ground black |)pepper$|^black peppercorns$/, "spices pepper black"],
+  [/^(red |green |yellow |orange |)(bell )?peppers?$/, (m) => `peppers sweet ${(m[1] || "").trim() || "red"} raw`],
+  [/^(red |green |)chill(i|ies|y|is)$/, "peppers hot chili red raw"],
+  [/^courgettes?$/, "squash summer zucchini raw"],
+  [/^aubergines?$/, "eggplant raw"],
+  [/^spring onions?$|^scallions?$/, "onions spring or scallions raw"],
+  [/^coriander$|^cilantro$/, "coriander cilantro raw"],
+  [/^rocket$/, "arugula raw"],
+  [/^basil$/, "basil fresh"],
+  [/^(flat[- ]leaf |curly |)parsley$/, "parsley fresh"],
+  [/^thyme$/, "thyme fresh"],
+  [/^rosemary$/, "rosemary fresh"],
+  [/^(red |white |brown |yellow |)onions?$/, "onions raw"],
+  [/^carrots?$/, "carrots raw"],
+  [/^celery( sticks?)?$/, "celery raw"],
+  [/^(baby |new |floury |waxy |maris piper |)potato(es)?$/, "potatoes flesh and skin raw"],
+  [/^(chopped |plum |tinned |canned |)tomatoes$/, "tomatoes red ripe canned packed in tomato juice"],
+  [/^passata$/, "tomato puree canned"],
+  [/^tomato (puree|purée|paste)$/, "tomato products canned paste"],
+  [/^chickpeas$/, "chickpeas mature seeds canned"],
+  [/^(chicken|vegetable|beef) (stock|broth)$/, (m) => `soup ${m[1]} broth ready-to-serve`],
+  [/^(ale|beer|stout|bitter)$/, "alcoholic beverage beer regular all"],
+  [/^red wine$/, "alcoholic beverage wine table red"],
+  [/^white wine$/, "alcoholic beverage wine table white"],
+  [/^(mature )?cheddar( cheese)?$/, "cheese cheddar"],
+  [/^(grated )?(parmesan|parmigiano reggiano)( cheese)?$/, "cheese parmesan hard"],
+  [/^mozzarella( cheese)?$/, "cheese mozzarella whole milk"],
+  [/^(long grain |basmati |white |jasmine |)rice$/, "rice white long-grain regular raw enriched"],
+  [/^(spaghetti|pasta|penne|fusilli|linguine|tagliatelle|macaroni)$/, "pasta dry enriched"],
+  [/^chicken breasts?$/, "chicken broilers or fryers breast meat only raw"],
+  [/^chicken thighs?$/, "chicken broilers or fryers thigh meat only raw"],
+  [/^lemon juice$/, "lemon juice raw"],
+  [/^lemons?$/, "lemons raw without peel"],
+  [/^limes?$/, "limes raw"],
+  [/^soy sauce$/, "soy sauce made from soy tamari"],
+  [/^water$/, "water tap drinking"],
+];
+
+function searchName(name) {
+  for (const [pattern, replacement] of SEARCH_NAMES) {
+    const match = name.match(pattern);
+    if (match) return typeof replacement === "function" ? replacement(match) : replacement;
+  }
+  return name;
 }
 
 // ---- USDA lookups (cached) ----
@@ -154,21 +229,30 @@ async function fdc(path, params = {}) {
   return response.json();
 }
 
-// Ranks USDA results: plain ingredients first, brands, fast food and baby food last
-function rankHits(name, foods) {
-  const words = name.split(" ").filter((w) => w.length > 2);
-  const cooked = /\b(cooked|boiled|roasted|fried|baked|grilled|canned|tinned|dried)\b/.test(name);
+const stem = (word) => word.replace(/ies$/, "y").replace(/(oes|es|s)$/, (m) => (m === "oes" ? "o" : ""));
+
+// Ranks USDA results: the description that contains the most of the searched words wins,
+// plain ingredients before brands, fast food and baby food
+function rankHits(query, foods) {
+  const words = [...new Set(query.split(" ").filter((w) => w.length > 2).map(stem))];
+  const cooked = /\b(cooked|boiled|roasted|fried|baked|grilled|canned|tinned|dried|dry)\b/.test(query);
   return foods
     .map((food, position) => {
       const description = food.description;
       const lower = description.toLowerCase();
-      let score = -position;
-      if (/^[A-Z0-9'&.\- ]{4,},/.test(description)) score -= 30; // brand names are written in capitals
-      if (/^(fast foods|restaurant|babyfood|snacks|school lunch|formulated)/i.test(description)) score -= 30;
-      const firstPart = lower.split(",")[0];
-      if (words.some((w) => firstPart.includes(w.replace(/e?s$/, "")))) score += 10;
+      const wordsIn = (text) => text.split(/[\s,()/]+/).filter(Boolean).map(stem);
+      const descriptionWords = new Set(wordsIn(lower));
+      const firstPart = wordsIn(lower.split(",")[0]);
+      const matched = words.filter((w) => descriptionWords.has(w));
+      let score = matched.length * 10 - position * 0.3;
+      if (words.length && matched.length === words.length) score += 15;
+      if (words.some((w) => firstPart.includes(w))) score += 8;
+      // Prefer simple descriptions over long, very specific ones
+      score -= description.split(",").length * 0.8;
+      if (/^[A-Z0-9'&.\- ]{4,},/.test(description)) score -= 40; // brand names are written in capitals
+      if (/^(fast foods|restaurant|babyfood|snacks|school lunch|formulated|infant formula|candies)/i.test(description)) score -= 40;
       if (!cooked && /\braw\b/.test(lower)) score += 4;
-      if (!cooked && /\b(cooked|boiled|fried|canned)\b/.test(lower)) score -= 2;
+      if (!cooked && /\b(cooked|boiled|fried|canned|roasted|braised|stewed)\b/.test(lower)) score -= 4;
       return { food, score };
     })
     .sort((a, b) => b.score - a.score)
@@ -176,11 +260,13 @@ function rankHits(name, foods) {
 }
 
 async function searchFoods(db, name) {
-  const key = `search:${name}`;
+  const query = searchName(name);
+  // (search2: entries saved as "search:" were ranked the old, less accurate way)
+  const key = `search2:${query}`;
   const cached = await cache(db).findOne({ _id: key });
   if (cached) return cached.hits;
-  const result = await fdc("/foods/search", { query: name, dataType: "SR Legacy", pageSize: 12 });
-  const hits = rankHits(name, result.foods || []).slice(0, 8);
+  const result = await fdc("/foods/search", { query, dataType: "SR Legacy", pageSize: 30 });
+  const hits = rankHits(query, result.foods || []).slice(0, 8);
   await cache(db).updateOne({ _id: key }, { $set: { hits, at: new Date() } }, { upsert: true });
   return hits;
 }
@@ -295,4 +381,4 @@ async function estimateNutrition(db, lines, servings, overrides = {}) {
   return { lines: results, servings, perServing: summarise(totals, servings) };
 }
 
-module.exports = { estimateNutrition, parseIngredient, FIELDS };
+module.exports = { estimateNutrition, parseIngredient, searchName, rankHits, FIELDS };
