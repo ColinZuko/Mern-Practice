@@ -4,7 +4,9 @@ import { imageUrl } from "../api";
 import { useAuth } from "../useAuth";
 import { RecipeContent } from "./RecipeContent";
 import { GroupedListField } from "./GroupedListField";
+import { NutritionField } from "./NutritionField";
 import { resizeImage } from "../lib/resizeImage";
+import { PhotoEditor } from "./PhotoEditor";
 import {
   celsiusToFahrenheit,
   countItems,
@@ -126,6 +128,9 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
     return { ...emptyRecipe(), ...saved };
   });
   const [file, setFile] = useState(null);
+  // The photo as chosen (before editing), so it can be edited again
+  const [originalPhoto, setOriginalPhoto] = useState(null);
+  const [editingPhoto, setEditingPhoto] = useState(false);
   const [preview, setPreview] = useState(imageUrl(initial?.imageId));
   const [tab, setTab] = useState("write");
   const [error, setError] = useState("");
@@ -199,17 +204,32 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
       return;
     }
     setError("");
-    // Big phone photos are shrunk first so recipe pages load quickly on phones
+    e.target.value = "";
+    setOriginalPhoto(selected);
+    setEditingPhoto(true);
+  }
+
+  function applyPhoto(photo) {
+    setFile(photo);
+    setPreview(URL.createObjectURL(photo));
+    setEditingPhoto(false);
+  }
+
+  // "Use the original": only shrunk, so recipe pages still load quickly on phones
+  async function keepOriginalPhoto() {
     setPreparingPhoto(true);
-    const resized = await resizeImage(selected);
+    const resized = await resizeImage(originalPhoto);
     setPreparingPhoto(false);
-    setFile(resized);
-    setPreview(URL.createObjectURL(resized));
+    applyPhoto(resized);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (submitting || preparingPhoto) return;
+    if (editingPhoto) {
+      setError("Finish editing the photo first: click “Use this photo” or “Use the original”.");
+      return;
+    }
     if (!title.trim() || !description.trim()) {
       setTab("write");
       setError("Please add a title and a short summary.");
@@ -359,6 +379,9 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
 
             <div>
               <span className={labelClass}>Cover photo</span>
+              {editingPhoto && originalPhoto ? (
+                <PhotoEditor key={originalPhoto.name + originalPhoto.lastModified} file={originalPhoto} onDone={applyPhoto} onSkip={keepOriginalPhoto} />
+              ) : (
               <button
                 type="button"
                 onClick={() => inputFile.current?.click()}
@@ -375,10 +398,16 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
                   <span className="flex aspect-[16/9] flex-col items-center justify-center gap-2 text-muted-foreground group-hover:text-primary">
                     <ImagePlus className="h-8 w-8" />
                     <span className="text-sm font-medium">Click to upload</span>
-                    <span className="text-xs">JPG, PNG or WebP. Landscape works best; big photos are shrunk for you.</span>
+                    <span className="text-xs">JPG, PNG or WebP. You can crop and touch it up next.</span>
                   </span>
                 )}
               </button>
+              )}
+              {!editingPhoto && originalPhoto && file && (
+                <button type="button" onClick={() => setEditingPhoto(true)} className="mt-2 text-sm font-medium text-primary hover:underline cursor-pointer">
+                  Edit photo again
+                </button>
+              )}
               {preparingPhoto && <p className={hintClass}>Preparing your photo…</p>}
               {draftRestored && !file && !preview && (
                 <p className={hintClass}>Photos aren't saved in drafts, so please add it again.</p>
@@ -482,7 +511,20 @@ export function PostForm({ initial, draftKey, submitLabel, submittingLabel, onSu
             />
           </Section>
 
-          <Section number="5" title="Extras" description="Optional, but they make a recipe feel personal.">
+          <Section
+            number="5"
+            title="Nutrition"
+            description="Optional. Shown per serving on the recipe, and Google can show it in search results."
+          >
+            <NutritionField
+              value={recipe.nutrition}
+              onChange={setField("nutrition")}
+              ingredients={recipe.ingredients}
+              servings={recipe.servings}
+            />
+          </Section>
+
+          <Section number="6" title="Extras" description="Optional, but they make a recipe feel personal.">
             <div>
               <label htmlFor="content" className={labelClass}>Intro</label>
               <textarea

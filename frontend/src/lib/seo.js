@@ -106,6 +106,20 @@ export function recipeStructuredData(post, apiUrl = BACKEND_URL) {
     keywords: (post.cuisines || []).map(cuisineLabel).join(", ") || undefined,
     recipeIngredient: items(r.ingredients),
     recipeInstructions: items(r.method).map((text) => ({ "@type": "HowToStep", text })),
+    nutrition: r.nutrition
+      ? {
+          "@type": "NutritionInformation",
+          servingSize: "1 serving",
+          calories: `${Math.round(r.nutrition.calories)} calories`,
+          proteinContent: `${r.nutrition.protein} g`,
+          fatContent: `${r.nutrition.fat} g`,
+          saturatedFatContent: `${r.nutrition.saturatedFat} g`,
+          carbohydrateContent: `${r.nutrition.carbs} g`,
+          sugarContent: `${r.nutrition.sugar} g`,
+          fiberContent: `${r.nutrition.fiber} g`,
+          sodiumContent: `${Math.round(r.nutrition.sodium)} mg`,
+        }
+      : undefined,
     aggregateRating: post.ratingCount
       ? { "@type": "AggregateRating", ratingValue: post.ratingAverage, ratingCount: post.ratingCount, bestRating: 5, worstRating: 1 }
       : undefined,

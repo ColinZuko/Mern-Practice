@@ -40,6 +40,19 @@ function isValidId(id) {
   return typeof id === "string" && /^[0-9a-fA-F]{24}$/.test(id);
 }
 
+// Nutrition per serving: calories (kcal), sodium (mg), the rest in grams. Null when not filled in.
+const NUTRITION_FIELDS = ["calories", "protein", "fat", "saturatedFat", "carbs", "sugar", "fiber", "sodium"];
+function cleanNutrition(input) {
+  if (!input || typeof input !== "object") return null;
+  const values = {};
+  for (const field of NUTRITION_FIELDS) {
+    const n = Number(input[field]);
+    if (input[field] === "" || input[field] === null || !Number.isFinite(n) || n < 0) return null;
+    values[field] = Math.min(Math.round(n * 10) / 10, 100000);
+  }
+  return values;
+}
+
 // Keeps only the known recipe template fields, with sensible types and lengths
 function cleanRecipe(input) {
   if (!input || typeof input !== "object") return null;
@@ -57,6 +70,7 @@ function cleanRecipe(input) {
     ingredients: text(input.ingredients, 10000),
     method: text(input.method, 20000),
     tips: text(input.tips, 5000),
+    nutrition: cleanNutrition(input.nutrition),
   };
 }
 

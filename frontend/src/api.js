@@ -17,6 +17,12 @@ export function imageUrl(imageId) {
 
 // ---- Posts ----
 
+// Estimated nutrition per serving from an ingredient list (editors and admins)
+export async function estimateNutrition({ ingredients, servings, overrides }) {
+  const response = await axios.post(`${URL}/nutrition/estimate`, { ingredients, servings, overrides });
+  return response.data;
+}
+
 export async function getTrendingPosts() {
   const response = await axios.get(`${URL}/posts/trending`);
   return response.data || [];

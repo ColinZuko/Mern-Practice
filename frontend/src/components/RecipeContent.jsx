@@ -4,6 +4,8 @@ import {
   celsiusToFahrenheit,
   formatMinutes,
   hasRecipe,
+  NUTRITION_FIELDS,
+  nutritionValue,
   parseLines,
 } from "../lib/recipes";
 
@@ -116,6 +118,30 @@ function Method({ text }) {
   );
 }
 
+// Nutrition per serving, like the label on a pack
+export function NutritionPanel({ nutrition }) {
+  if (!nutrition) return null;
+  return (
+    <section className="rounded-2xl border bg-card p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-xl font-semibold">Nutrition per serving</h2>
+        <p className="text-xs text-muted-foreground">An estimate, worked out from the ingredients</p>
+      </div>
+      <dl className="mt-5 grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
+        {NUTRITION_FIELDS.map(({ key, label, unit }) => (
+          <div key={key} className={label.startsWith("of which") ? "pl-3" : ""}>
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+            <dd className={key === "calories" ? "text-2xl font-semibold" : "text-lg font-medium"}>
+              {nutritionValue(nutrition, key)}
+              <span className="ml-1 text-sm font-normal text-muted-foreground">{unit}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 const LEGACY_HEADING =
   /^(ingredients|instructions|method|directions|steps|preparation|notes|tips)\s*:?$/i;
 
@@ -189,6 +215,8 @@ export function RecipeContent({ post }) {
           </section>
         )}
       </div>
+
+      <NutritionPanel nutrition={recipe.nutrition} />
 
       {tips.length > 0 && (
         <aside className="rounded-2xl border border-primary/20 bg-primary/5 p-6">

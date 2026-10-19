@@ -74,7 +74,33 @@ export function emptyRecipe() {
     ingredients: "",
     method: "",
     tips: "",
+    nutrition: null,
   };
+}
+
+// Nutrition per serving, in the order it's shown
+export const NUTRITION_FIELDS = [
+  { key: "calories", label: "Calories", unit: "kcal" },
+  { key: "protein", label: "Protein", unit: "g" },
+  { key: "carbs", label: "Carbs", unit: "g" },
+  { key: "sugar", label: "of which sugars", unit: "g" },
+  { key: "fat", label: "Fat", unit: "g" },
+  { key: "saturatedFat", label: "of which saturates", unit: "g" },
+  { key: "fiber", label: "Fibre", unit: "g" },
+  { key: "sodium", label: "Salt", unit: "g" },
+];
+
+// Shown as salt (like UK/EU labels): salt = sodium x 2.5
+export function nutritionValue(nutrition, key) {
+  if (key === "sodium") return Math.round((nutrition.sodium * 2.5) / 100) / 10;
+  return key === "calories" ? Math.round(nutrition.calories) : Math.round(nutrition[key] * 10) / 10;
+}
+
+// "4", "4-6" or "12 cookies" -> 4, 5, 12
+export function servingsNumber(servings) {
+  const match = String(servings || "").match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+  if (!match) return null;
+  return match[2] ? Math.round((Number(match[1]) + Number(match[2])) / 2) : Number(match[1]);
 }
 
 // True when a post uses the structured recipe template (newer posts)
