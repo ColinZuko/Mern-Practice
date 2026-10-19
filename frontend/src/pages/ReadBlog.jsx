@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowDown, Check, Clock, Eye, Link2, Pencil, Printer, Trash2 } from "lucide-react";
+import { ArrowDown, Check, Clock, Eye, ImagePlus, Link2, Pencil, Printer, Trash2 } from "lucide-react";
 import { API_URL, deletePost, getPost, getPosts, logView } from "../api";
 import { useSeo } from "../useSeo";
 import { describe, idFromRecipeParam, recipeImage, recipePath, recipeStructuredData } from "../lib/seo";
@@ -216,6 +216,12 @@ export function ReadBlog() {
                 className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted"
               >
                 <Pencil className="h-4 w-4" /> Edit
+              </Link>
+              <Link
+                to={`/pin/${post._id}`}
+                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+              >
+                <ImagePlus className="h-4 w-4" /> Pinterest pin
               </Link>
               <button
                 type="button"

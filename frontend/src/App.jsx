@@ -17,6 +17,7 @@ import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
 import { Privacy } from "./pages/Privacy";
 import { Unsubscribe } from "./pages/Unsubscribe";
+import { PinMaker } from "./pages/PinMaker";
 import { Layout } from "./components/Layout";
 import { RequireAuth } from "./components/RequireAuth";
 import { AnalyticsTracker } from "./components/AnalyticsTracker";
@@ -59,6 +60,7 @@ function App() {
             {/* Editors and admins */}
             <Route path="/createblog" element={<RequireAuth roles={WRITERS}><CreateBlog /></RequireAuth>} />
             <Route path="/edit-post/:id" element={<RequireAuth roles={WRITERS}><EditBlog /></RequireAuth>} />
+            <Route path="/pin/:id" element={<RequireAuth roles={WRITERS}><PinMaker /></RequireAuth>} />
 
             {/* Admins */}
             <Route path="/admin" element={<RequireAuth roles={["admin"]}><Admin /></RequireAuth>} />
