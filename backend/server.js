@@ -100,8 +100,8 @@ app.use((error, req, res, next) => {
   res.status(500).json({ message: "Server error" });
 });
 
-// Vercel imports the app as a serverless function; everywhere else (Render, local) we need a listening server
-if (!process.env.VERCEL) {
+// Listen only when run directly (Render, local); Vercel and the tests import the app instead
+if (require.main === module) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is running on port: ${PORT}`);

@@ -3,6 +3,10 @@
 Recipe blog: React + Vite frontend (`frontend/`, on Vercel) and an Express + MongoDB API
 (`backend/`, on Render at api.pickleandpan.com).
 
+Backend tests: `cd backend && npm test` (node:test; each file uses its own throwaway `*_test`
+database). They run on every push in GitHub Actions against a MongoDB container. Add a test
+when you change an API route.
+
 ## Design standard
 
 All UI work follows the **apple-design** skill in `.claude/skills/apple-design/` (Apple's Human

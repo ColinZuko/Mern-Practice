@@ -4,7 +4,7 @@
 // and its weight in grams is worked out from the unit or USDA's portion sizes.
 // Lookups are cached in MongoDB, so each ingredient is only fetched from USDA once.
 
-const FDC_URL = process.env.USDA_API_URL || "https://api.nal.usda.gov/fdc/v1";
+const FDC_URL = "https://api.nal.usda.gov/fdc/v1";
 
 // USDA nutrient ids -> our field names (sodium in mg, energy in kcal, the rest in grams)
 const NUTRIENTS = {
@@ -216,7 +216,7 @@ function cache(db) {
 }
 
 async function fdc(path, params = {}) {
-  const url = new URL(`${FDC_URL}${path}`);
+  const url = new URL(`${process.env.USDA_API_URL || FDC_URL}${path}`);
   url.searchParams.set("api_key", process.env.USDA_API_KEY || "DEMO_KEY");
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
