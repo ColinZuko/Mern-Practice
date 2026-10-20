@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChefHat } from "lucide-react";
-import { BreadIcon } from "./BreadIcon";
+import { BreadRow } from "./BreadRating";
 import { imageUrl } from "../api";
 import { recipePath } from "../lib/seo";
 import { cuisineLabel, formatDate, postText, readingTime } from "../lib/recipes";
@@ -68,13 +68,12 @@ function Eyebrow({ post }) {
 
 function Rating({ post }) {
   if (!post.ratingCount) return null;
+  const average = post.ratingAverage.toFixed(1);
   return (
-    <span
-      className="inline-flex items-center gap-1"
-      title={`${post.ratingAverage.toFixed(1)} out of 5 from ${post.ratingCount} ${post.ratingCount === 1 ? "rating" : "ratings"}`}
-    >
-      <BreadIcon variant="full" className="h-3.5 w-3.5" />
-      {post.ratingAverage.toFixed(1)}
+    <span className="inline-flex items-center gap-1.5">
+      <BreadRow average={post.ratingAverage} className="h-3.5 w-3.5" />
+      <span aria-hidden="true">{average}</span>
+      <span className="sr-only">{`Rated ${average} out of 5`}</span>
     </span>
   );
 }
@@ -136,7 +135,7 @@ export function BlogCard({ post, variant = "default", rank }) {
           </h3>
           <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
             {post.authorName || "Unknown author"} · {post.views || 0} {post.views === 1 ? "view" : "views"}
-            {post.ratingCount > 0 && <>· <Rating post={post} /></>}
+            {post.ratingCount > 0 && <>{" · "}<Rating post={post} /></>}
           </p>
         </div>
         <div className="shrink-0 overflow-hidden rounded-lg">

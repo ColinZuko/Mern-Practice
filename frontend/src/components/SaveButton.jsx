@@ -43,7 +43,7 @@ export function SaveButton({ postId }) {
       }`}
     >
       {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
-      {saved ? "Saved" : "Save recipe"}
+      <span className="max-sm:sr-only">{saved ? "Saved" : "Save recipe"}</span>
     </button>
     {notice && <p className="basis-full text-sm text-muted-foreground">{notice}</p>}
     </>

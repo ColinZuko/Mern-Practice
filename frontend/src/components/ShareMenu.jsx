@@ -53,10 +53,10 @@ export function ShareMenu({ title, className }) {
   return (
     <div ref={menu} className="relative">
       <button type="button" onClick={share} aria-haspopup="menu" aria-expanded={open} className={className}>
-        <Share2 className="h-4 w-4" /> Share
+        <Share2 className="h-4 w-4" /> <span className="max-sm:sr-only">Share</span>
       </button>
       {open && (
-        <div role="menu" className="absolute left-1/2 z-20 mt-2 w-48 -translate-x-1/2 rounded-xl border bg-popover p-1 text-popover-foreground shadow-lg">
+        <div role="menu" className="absolute right-0 z-20 mt-2 w-48 rounded-xl sm:left-1/2 sm:right-auto sm:-translate-x-1/2 border bg-popover p-1 text-popover-foreground shadow-lg">
           <button type="button" role="menuitem" onClick={copyLink} className={itemClass}>
             {copied ? <Check className="h-4 w-4 text-primary" /> : <Link2 className="h-4 w-4" />}
             {copied ? "Link copied" : "Copy link"}

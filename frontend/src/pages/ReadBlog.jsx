@@ -168,6 +168,8 @@ export function ReadBlog() {
             </span>
           </Link>
           <span className="hidden h-8 border-l sm:block" />
+          {/* Rating and reading time share a line on phones, so the photo comes sooner */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <RatingSummary average={post.ratingAverage || 0} count={post.ratingCount || 0} />
           <span className="hidden h-8 border-l sm:block" />
           <span className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -178,6 +180,7 @@ export function ReadBlog() {
               <Eye className="h-3.5 w-3.5" /> {post.views || 0} {post.views === 1 ? "view" : "views"}
             </span>
           </span>
+          </div>
         </div>
 
         <div className="mt-6 flex flex-wrap justify-center gap-2 print:hidden">
