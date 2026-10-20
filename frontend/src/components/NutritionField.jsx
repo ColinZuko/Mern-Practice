@@ -99,7 +99,7 @@ function NutritionCalculator({ ingredients, servings, onUse, onCancel }) {
                   <td className="py-2 pr-3">
                     {!line.skipped && (
                       <div className="flex items-center gap-1">
-                        {line.gramsGuessed && <span title="Estimated weight" className="text-amber-700">≈</span>}
+                        {line.gramsGuessed && <span title="Estimated weight" className="text-warning-foreground">≈</span>}
                         <input
                           type="number"
                           min="0"

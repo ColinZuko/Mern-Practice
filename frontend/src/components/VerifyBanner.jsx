@@ -24,7 +24,7 @@ export function VerifyBanner() {
   }
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50 text-amber-950 print:hidden">
+    <div className="border-b border-warning-border bg-warning text-warning-foreground print:hidden">
       <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:px-6">
         <p className="flex flex-1 items-start gap-2">
           <MailWarning className="mt-0.5 h-4 w-4 shrink-0" />
@@ -40,7 +40,7 @@ export function VerifyBanner() {
             type="button"
             onClick={handleResend}
             disabled={sending}
-            className="self-start rounded-full border border-amber-300 bg-white px-4 py-1.5 font-medium transition hover:bg-amber-100 disabled:opacity-60 sm:self-auto cursor-pointer"
+            className="self-start min-h-11 rounded-full border border-warning-border bg-card px-4 font-medium text-foreground transition hover:bg-muted disabled:opacity-60 sm:self-auto cursor-pointer"
           >
             {sending ? "Sending…" : "Resend email"}
           </button>

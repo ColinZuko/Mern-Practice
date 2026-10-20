@@ -8,6 +8,7 @@ import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
 import { useSeo } from "../useSeo";
 import { YourData } from "../components/YourData";
 import { EmailPreferences } from "../components/EmailPreferences";
+import { useConfirm } from "../components/ConfirmDialog";
 
 const ROLE_DESCRIPTIONS = {
   admin: "You can write recipes, edit or remove any post, and manage user roles.",
@@ -20,6 +21,8 @@ export function Profile() {
   const { user, role, canWrite, isVerified, logout } = useAuth();
   const navigate = useNavigate();
   const [allPosts, setAllPosts] = useState([]);
+  const [deleteError, setDeleteError] = useState("");
+  const [confirmDialog, confirm] = useConfirm();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,14 +42,21 @@ export function Profile() {
   const saved = allPosts.filter((post) => savedIds.includes(post._id));
   const mine = allPosts.filter((post) => post.author === user._id);
 
-  async function handleDelete(postId) {
-    if (!window.confirm("Delete this recipe? This can't be undone.")) return;
+  async function handleDelete(post) {
+    const ok = await confirm({
+      title: `Delete “${post.title}”?`,
+      message: "The recipe, its photo, comments and ratings are removed. This can't be undone.",
+      confirmLabel: "Delete recipe",
+    });
+    if (!ok) return;
+    setDeleteError("");
+    const postId = post._id;
     try {
       await deletePost(postId);
       setAllPosts((posts) => posts.filter((post) => post._id !== postId));
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("Failed to delete the recipe. Please try again.");
+      setDeleteError("Couldn't delete the recipe. Check your connection and try again.");
     }
   }
 
@@ -58,6 +68,7 @@ export function Profile() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6">
+      {confirmDialog}
       {/* Account summary */}
       <header className="flex flex-col gap-6 border-b pb-10 sm:flex-row sm:items-center">
         <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary/10 font-serif text-3xl font-semibold text-primary">
@@ -72,7 +83,7 @@ export function Profile() {
           </div>
           <p className="text-sm text-muted-foreground">
             {user.email}
-            {!isVerified && <span className="font-medium text-amber-700"> (not confirmed yet)</span>}
+            {!isVerified && <span className="font-medium text-warning-foreground"> (not confirmed yet)</span>}
             {user.joinDate && <> · Member since {formatDate(user.joinDate)}</>}
           </p>
           <p className="text-sm text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
@@ -95,6 +106,7 @@ export function Profile() {
               Write a new recipe
             </Link>
           </div>
+          {deleteError && <p role="alert" className="mb-6 text-sm font-medium text-destructive">{deleteError}</p>}
           {loading ? (
             <p className="text-muted-foreground">Loading…</p>
           ) : mine.length === 0 ? (
@@ -107,14 +119,14 @@ export function Profile() {
                   <div className="mt-4 flex gap-2 border-t pt-4">
                     <Link
                       to={`/edit-post/${post._id}`}
-                      className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-medium hover:bg-muted"
                     >
                       <Pencil className="h-3.5 w-3.5" /> Edit
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleDelete(post._id)}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-destructive/30 px-3 py-1.5 text-xs font-medium text-destructive hover:bg-destructive/5 cursor-pointer"
+                      onClick={() => handleDelete(post)}
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-destructive/30 px-4 text-sm font-medium text-destructive hover:bg-destructive/5 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </button>

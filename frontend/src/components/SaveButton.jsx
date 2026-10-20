@@ -36,7 +36,7 @@ export function SaveButton({ postId }) {
       type="button"
       onClick={handleClick}
       disabled={busy}
-      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition cursor-pointer disabled:opacity-60 ${
+      className={`inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition cursor-pointer disabled:opacity-60 ${
         saved
           ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
           : "hover:bg-muted"

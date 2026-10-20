@@ -4,6 +4,7 @@ import { createBackupNow, deleteUser, getBackups, getUsers, setUserRole } from "
 import { useAuth } from "../useAuth";
 import { formatDate, initials, ROLE_LABELS } from "../lib/recipes";
 import { useSeo } from "../useSeo";
+import { useConfirm } from "../components/ConfirmDialog";
 
 const ROLE_OPTIONS = ["user", "editor", "admin"];
 
@@ -59,10 +60,10 @@ function BackupsPanel() {
       <div className="mt-5 text-sm">
         {backups === null && !status && <p className="text-muted-foreground">Loading…</p>}
         {backups && backups.length === 0 && (
-          <p className="font-medium text-amber-700">No backups yet. The first one is made shortly after the server starts.</p>
+          <p className="font-medium text-warning-foreground">No backups yet. The first one is made shortly after the server starts.</p>
         )}
         {latest && (
-          <p className={hoursAgo > 26 ? "font-medium text-amber-700" : ""}>
+          <p className={hoursAgo > 26 ? "font-medium text-warning-foreground" : ""}>
             Latest backup: {new Date(latest.lastModified).toLocaleString("en-GB")} ({Math.round(latest.size / 1024)} KB)
             {hoursAgo > 26 && " — older than a day, check the server logs"}
           </p>
@@ -83,6 +84,7 @@ export function Admin() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmDialog, confirm] = useConfirm();
 
   useEffect(() => {
     async function load() {
@@ -111,13 +113,13 @@ export function Admin() {
   }
 
   async function handleRemove(target) {
-    const confirmed = window.confirm(
-      `Remove ${target.name} (${target.email})?
-
-` +
-        "Their account is deleted and they can no longer log in. " +
-        "Their comments and ratings are removed; recipes they published stay online as \"Former contributor\". This can't be undone.",
-    );
+    const confirmed = await confirm({
+      title: `Remove ${target.name}?`,
+      message:
+        `${target.email} can no longer log in. Their comments and ratings are removed; recipes they ` +
+        "published stay online as “Former contributor”. This can't be undone.",
+      confirmLabel: "Remove user",
+    });
     if (!confirmed) return;
     try {
       await deleteUser(target._id);
@@ -139,6 +141,7 @@ export function Admin() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+      {confirmDialog}
       <header className="border-b pb-8">
         <h1 className="text-4xl font-semibold">Manage users</h1>
         <p className="mt-2 text-muted-foreground">
@@ -181,7 +184,7 @@ export function Admin() {
                   <p className="truncate font-medium">
                     {u.name} {isMe && <span className="text-xs text-muted-foreground">(you)</span>}
                     {!u.emailVerified && (
-                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                      <span className="ml-2 rounded-full bg-warning px-2 py-0.5 text-xs font-medium text-warning-foreground">
                         Email not confirmed
                       </span>
                     )}

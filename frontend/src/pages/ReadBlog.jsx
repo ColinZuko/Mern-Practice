@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowDown, Check, Clock, Eye, ImagePlus, Link2, Pencil, Printer, Trash2 } from "lucide-react";
+import { ArrowDown, Clock, Eye, ImagePlus, Pencil, Trash2 } from "lucide-react";
 import { API_URL, deletePost, getPost, getPosts, logView } from "../api";
 import { useSeo } from "../useSeo";
 import { describe, idFromRecipeParam, recipeImage, recipePath, recipeStructuredData } from "../lib/seo";
@@ -10,6 +10,9 @@ import { SaveButton } from "../components/SaveButton";
 import { RecipeContent } from "../components/RecipeContent";
 import { RateRecipe, RatingSummary } from "../components/BreadRating";
 import { Comments } from "../components/Comments";
+import { ShareMenu } from "../components/ShareMenu";
+import { useConfirm } from "../components/ConfirmDialog";
+import { scrollBehavior } from "../lib/motion";
 import { cuisineLabel, formatDate, hasRecipe, initials, postText, readingTime } from "../lib/recipes";
 
 export function ReadBlog() {
@@ -21,7 +24,8 @@ export function ReadBlog() {
   const { canManage } = useAuth();
   // Stored with the id it was loaded for, so an old recipe never shows while the next one loads
   const [loaded, setLoaded] = useState({ id: null, post: null, related: [], notFound: false });
-  const [copied, setCopied] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [confirmDialog, confirm] = useConfirm();
   const viewLogged = useRef(null);
 
   useEffect(() => {
@@ -87,24 +91,20 @@ export function ReadBlog() {
       : { title: notFound ? "Recipe not found" : "Recipe", noindex: true },
   );
 
-  async function handleCopyLink() {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      window.prompt("Copy this link:", window.location.href);
-    }
-  }
-
   async function handleDelete() {
-    if (!window.confirm("Delete this recipe? This can't be undone.")) return;
+    const ok = await confirm({
+      title: `Delete “${post.title}”?`,
+      message: "The recipe, its photo, comments and ratings are removed. This can't be undone.",
+      confirmLabel: "Delete recipe",
+    });
+    if (!ok) return;
+    setDeleteError("");
     try {
       await deletePost(post._id);
       navigate("/");
     } catch (error) {
       console.error("Error deleting post:", error);
-      alert("Failed to delete the recipe. Please try again.");
+      setDeleteError("Couldn't delete the recipe. Check your connection and try again.");
     }
   }
 
@@ -132,13 +132,14 @@ export function ReadBlog() {
 
   return (
     <article className="pb-8">
+      {confirmDialog}
       <header className="mx-auto max-w-3xl px-4 pt-12 text-center sm:px-6 sm:pt-16">
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-1">
           {post.cuisines?.map((tag) => (
             <Link
               key={tag}
               to={`/recipes?cuisine=${encodeURIComponent(tag)}`}
-              className="text-xs font-semibold uppercase tracking-widest text-primary hover:underline"
+              className="-my-3 inline-block py-3 text-xs font-semibold uppercase tracking-widest text-primary hover:underline"
             >
               {cuisineLabel(tag)}
             </Link>
@@ -174,7 +175,7 @@ export function ReadBlog() {
               <Clock className="h-3.5 w-3.5" /> {readingTime(postText(post))} min read
             </span>
             <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" /> {post.views || 0} views
+              <Eye className="h-3.5 w-3.5" /> {post.views || 0} {post.views === 1 ? "view" : "views"}
             </span>
           </span>
         </div>
@@ -186,53 +187,43 @@ export function ReadBlog() {
               onClick={(e) => {
                 // Smooth scroll instead of jumping, and keep the address clean
                 e.preventDefault();
-                document.getElementById("recipe")?.scrollIntoView({ behavior: "smooth" });
+                document.getElementById("recipe")?.scrollIntoView({ behavior: scrollBehavior() });
               }}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
               <ArrowDown className="h-4 w-4" /> Jump to recipe
             </a>
           )}
           <SaveButton postId={post._id} />
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted cursor-pointer"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-            {copied ? "Link copied" : "Copy link"}
-          </button>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted cursor-pointer"
-          >
-            <Printer className="h-4 w-4" /> Print
-          </button>
+          <ShareMenu
+            title={post.title}
+            className="inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition hover:bg-muted cursor-pointer"
+          />
           {canManage(post) && (
             <>
               <Link
                 to={`/edit-post/${post._id}`}
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                className="inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition hover:bg-muted"
               >
                 <Pencil className="h-4 w-4" /> Edit
               </Link>
               <Link
                 to={`/pin/${post._id}`}
-                className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                className="inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition hover:bg-muted"
               >
                 <ImagePlus className="h-4 w-4" /> Pinterest pin
               </Link>
               <button
                 type="button"
                 onClick={handleDelete}
-                className="inline-flex items-center gap-2 rounded-full border border-destructive/30 px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/5 cursor-pointer"
+                className="inline-flex h-11 items-center gap-2 rounded-full border border-destructive/30 px-4 text-sm font-medium text-destructive transition hover:bg-destructive/5 cursor-pointer"
               >
                 <Trash2 className="h-4 w-4" /> Delete
               </button>
             </>
           )}
         </div>
+        {deleteError && <p role="alert" className="mt-3 text-sm font-medium text-destructive">{deleteError}</p>}
       </header>
 
       <div className="mx-auto mt-10 max-w-5xl px-4 sm:px-6">

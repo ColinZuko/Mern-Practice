@@ -5,9 +5,11 @@ import { deleteMyAccount, exportMyData } from "../api";
 import { useAuth } from "../useAuth";
 import { PasswordInput } from "./PasswordInput";
 import { authInputClass } from "./Login";
+import { useConfirm } from "./ConfirmDialog";
 
 // "Your data" on the account page: download everything, or delete the account (GDPR)
 export function YourData() {
+  const [confirmDialog, confirm] = useConfirm();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
@@ -36,14 +38,18 @@ export function YourData() {
 
   async function handleDelete(e) {
     e.preventDefault();
-    if (!window.confirm("Delete your account for good? This can't be undone.")) return;
+    const ok = await confirm({
+      title: "Delete your account?",
+      message: "Your account, comments and ratings are deleted for good. Recipes you published stay online without your name.",
+      confirmLabel: "Delete my account",
+    });
+    if (!ok) return;
     setDeleting(true);
     setMessage("");
     try {
       await deleteMyAccount(user._id, password);
       logout();
-      navigate("/", { replace: true });
-      window.alert("Your account has been deleted. Thanks for cooking with us!");
+      navigate("/", { replace: true, state: { notice: "Your account has been deleted. Thanks for cooking with us!" } });
     } catch (error) {
       setMessage(error.response?.data?.message || "Couldn't delete your account. Please try again.");
       setDeleting(false);
@@ -52,6 +58,7 @@ export function YourData() {
 
   return (
     <section className="pt-12">
+      {confirmDialog}
       <h2 className="mb-6 border-b pb-3 text-2xl font-semibold sm:text-3xl">Your data</h2>
       <p className="max-w-2xl text-sm text-muted-foreground">
         See what we store and why in our{" "}

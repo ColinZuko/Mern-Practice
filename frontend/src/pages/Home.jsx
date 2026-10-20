@@ -15,7 +15,7 @@ function SectionHeading({ title, link, linkText }) {
       {link && (
         <Link
           to={link}
-          className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
+          className="-my-3 flex min-h-11 shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
         >
           {linkText} <ArrowRight className="h-4 w-4" />
         </Link>
@@ -91,6 +91,7 @@ export function Home() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6">
+      <h1 className="sr-only">Pickle &amp; Pan: homemade recipes</h1>
       {/* Lead story + most popular */}
       <section className="grid gap-12 py-10 lg:grid-cols-12 lg:py-14">
         <div className="lg:col-span-8">
@@ -158,7 +159,7 @@ export function Home() {
           </p>
           <Link
             to="/about"
-            className="inline-flex items-center gap-1 pt-1 text-sm font-semibold underline-offset-4 hover:underline"
+            className="-my-2 inline-flex min-h-11 items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline"
           >
             Read my story <ArrowRight className="h-4 w-4" />
           </Link>

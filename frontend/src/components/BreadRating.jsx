@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyRating, rateRecipe, removeRating } from "../api";
 import { useAuth } from "../useAuth";
 import { BreadIcon } from "./BreadIcon";
+import { scrollBehavior } from "../lib/motion";
 
 const LABELS = ["", "Not for me", "It's okay", "Good", "Really good", "Absolutely loved it"];
 
@@ -33,7 +34,7 @@ export function RatingSummary({ average, count }) {
       href="#rate"
       onClick={(e) => {
         e.preventDefault();
-        document.getElementById("rate")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        document.getElementById("rate")?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       }}
       className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       title={ratingText(average, count)}

@@ -125,7 +125,7 @@ export function BlogCard({ post, variant = "default", rank }) {
     return (
       <Link to={link} className="group flex items-start gap-4">
         {rank && (
-          <span className="w-7 shrink-0 font-serif text-3xl font-semibold leading-none text-primary/30">
+          <span className="w-7 shrink-0 font-serif text-3xl font-semibold leading-none text-primary/60">
             {rank}
           </span>
         )}
@@ -135,7 +135,7 @@ export function BlogCard({ post, variant = "default", rank }) {
             {post.title}
           </h3>
           <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
-            {post.authorName || "Unknown author"} · {post.views || 0} views
+            {post.authorName || "Unknown author"} · {post.views || 0} {post.views === 1 ? "view" : "views"}
             {post.ratingCount > 0 && <>· <Rating post={post} /></>}
           </p>
         </div>

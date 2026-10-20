@@ -20,11 +20,11 @@ export function Footer() {
           <h3 className="mb-3 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Explore
           </h3>
-          <ul className="space-y-2 text-sm">
-            <li><Link to="/" className="hover:text-primary">Home</Link></li>
-            <li><Link to="/recipes" className="hover:text-primary">All recipes</Link></li>
-            <li><Link to="/about" className="hover:text-primary">About</Link></li>
-            <li><Link to="/privacy" className="hover:text-primary">Privacy</Link></li>
+          <ul className="text-sm md:space-y-2">
+            <li><Link to="/" className="inline-flex min-h-11 items-center hover:text-primary md:min-h-0">Home</Link></li>
+            <li><Link to="/recipes" className="inline-flex min-h-11 items-center hover:text-primary md:min-h-0">All recipes</Link></li>
+            <li><Link to="/about" className="inline-flex min-h-11 items-center hover:text-primary md:min-h-0">About</Link></li>
+            <li><Link to="/privacy" className="inline-flex min-h-11 items-center hover:text-primary md:min-h-0">Privacy</Link></li>
           </ul>
         </div>
 
@@ -32,12 +32,12 @@ export function Footer() {
           <h3 className="mb-3 font-sans text-xs font-semibold uppercase tracking-widest text-muted-foreground">
             Popular cuisines
           </h3>
-          <ul className="space-y-2 text-sm">
+          <ul className="text-sm md:space-y-2">
             {CUISINES.slice(0, 5).map((cuisine) => (
               <li key={cuisine}>
                 <Link
                   to={`/recipes?cuisine=${encodeURIComponent(cuisine.toLowerCase())}`}
-                  className="hover:text-primary"
+                  className="inline-flex min-h-11 items-center hover:text-primary md:min-h-0"
                 >
                   {cuisine}
                 </Link>

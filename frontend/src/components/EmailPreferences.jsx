@@ -35,7 +35,7 @@ export function EmailPreferences() {
             Get an email with the photo and a taste of each new recipe. You can unsubscribe from any email.
           </p>
           {!isVerified && enabled && (
-            <p className="mt-1 text-sm text-amber-700">Confirm your email address first, then these emails will start.</p>
+            <p className="mt-1 text-sm text-warning-foreground">Confirm your email address first, then these emails will start.</p>
           )}
         </div>
         <button

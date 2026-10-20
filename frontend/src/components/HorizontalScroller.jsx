@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { scrollBehavior } from "../lib/motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // A single row that scrolls sideways. Arrow buttons appear on hover (only on a side with
@@ -31,7 +32,7 @@ export function HorizontalScroller({ children, className = "" }) {
 
   function scrollBy(direction) {
     const row = rowRef.current;
-    row.scrollBy({ left: direction * row.clientWidth * 0.7, behavior: "smooth" });
+    row.scrollBy({ left: direction * row.clientWidth * 0.7, behavior: scrollBehavior() });
   }
 
   const arrowClass =

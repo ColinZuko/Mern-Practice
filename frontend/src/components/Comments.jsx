@@ -4,10 +4,12 @@ import { MessageCircle, Trash2 } from "lucide-react";
 import { addComment, deleteComment, getComments } from "../api";
 import { useAuth } from "../useAuth";
 import { initials, timeAgo } from "../lib/recipes";
+import { useConfirm } from "./ConfirmDialog";
 
 const MAX_LENGTH = 2000;
 
 export function Comments({ post }) {
+  const [confirmDialog, confirm] = useConfirm();
   const { user, isLoggedIn, isVerified, isAdmin } = useAuth();
   const [loaded, setLoaded] = useState({ postId: null, comments: [] });
   const [text, setText] = useState("");
@@ -49,7 +51,9 @@ export function Comments({ post }) {
   }
 
   async function handleDelete(comment) {
-    if (!window.confirm("Delete this comment?")) return;
+    const ok = await confirm({ title: "Delete this comment?", message: "It's removed for everyone.", confirmLabel: "Delete comment" });
+    if (!ok) return;
+    setError("");
     try {
       await deleteComment(comment._id);
       setLoaded((current) => ({
@@ -57,12 +61,13 @@ export function Comments({ post }) {
         comments: current.comments.filter((c) => c._id !== comment._id),
       }));
     } catch (err) {
-      alert(err.response?.data?.message || "Couldn't delete the comment.");
+      setError(err.response?.data?.message || "Couldn't delete the comment. Check your connection and try again.");
     }
   }
 
   return (
     <section id="comments" className="mx-auto mt-20 max-w-3xl scroll-mt-24 px-4 sm:px-6 print:hidden">
+      {confirmDialog}
       <h2 className="flex items-center gap-2 border-b pb-3 text-2xl font-semibold sm:text-3xl">
         <MessageCircle className="h-6 w-6 text-primary" />
         Comments
@@ -73,7 +78,7 @@ export function Comments({ post }) {
       <div className="mt-6">
         {!isLoggedIn ? (
           <p className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
-            <Link to="/login" className="font-medium text-primary hover:underline">Sign in</Link> to join the
+            <Link to="/login" className="-my-3 inline-block py-3 font-medium text-primary hover:underline">Sign in</Link> to join the
             conversation. Made this recipe? Tell us how it went!
           </p>
         ) : !isVerified ? (

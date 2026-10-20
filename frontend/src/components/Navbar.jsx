@@ -174,8 +174,9 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Open menu"
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted md:hidden cursor-pointer"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            className="flex h-11 w-11 items-center justify-center rounded-full hover:bg-muted md:hidden cursor-pointer"
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
