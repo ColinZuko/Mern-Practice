@@ -16,5 +16,7 @@ dist/
 # Editor and tool settings
 .vscode/
 .idea/
-.claude/
+# Local Claude settings stay private; shared skills (like the design standard) are committed
+.claude/*
+!.claude/skills/
 .DS_Store
