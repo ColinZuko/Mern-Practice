@@ -74,7 +74,7 @@ export default async function handler(req, res) {
   } else if (status === 404) {
     html = replaceSeoBlock(
       shell,
-      `<title>Recipe not found — Pickle &amp; Pan</title>\n    <meta name="robots" content="noindex" />`,
+      `<title>Recipe not found - Pickle &amp; Pan</title>\n    <meta name="robots" content="noindex" />`,
     );
   }
 

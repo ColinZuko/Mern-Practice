@@ -3,7 +3,7 @@ import { cuisineLabel, hasRecipe, parseLines } from "./recipes.js";
 
 export const SITE_URL = "https://pickleandpan.com";
 export const SITE_NAME = "Pickle & Pan";
-export const DEFAULT_TITLE = "Pickle & Pan — Homemade recipes, savor every bite";
+export const DEFAULT_TITLE = "Pickle & Pan - Homemade recipes, savor every bite";
 export const DEFAULT_DESCRIPTION =
   "Tried-and-tested homemade recipes with clear ingredients, steps and cooking times. From weeknight pasta to weekend baking.";
 export const DEFAULT_IMAGE = `${SITE_URL}/og-default.png`;
@@ -47,7 +47,7 @@ export function recipeImage(post, apiUrl = BACKEND_URL) {
 }
 
 export function recipeTitle(post) {
-  return `${post.title} — ${SITE_NAME}`;
+  return `${post.title} - ${SITE_NAME}`;
 }
 
 // 75 minutes -> "PT1H15M" (the duration format Google expects)

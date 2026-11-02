@@ -36,7 +36,7 @@ export function useSeo({ title, description, path, image, type = "website", noin
   const key = JSON.stringify({ title, description, path, image, type, noindex, structuredData });
 
   useEffect(() => {
-    const fullTitle = title ? `${title} — ${SITE_NAME}` : DEFAULT_TITLE;
+    const fullTitle = title ? `${title} - ${SITE_NAME}` : DEFAULT_TITLE;
     const text = description || DEFAULT_DESCRIPTION;
     const url = SITE_URL + (path ?? window.location.pathname);
 
