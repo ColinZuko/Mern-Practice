@@ -52,6 +52,10 @@ app.get(["/health", "/api/health"], (req, res) => {
   res.json({ status: "ok" });
 });
 
+// Search engines find this domain through recipe photos; send the bare address to the website.
+// (No robots.txt blocking the API: Google needs it to render recipe pages.)
+app.get("/", (req, res) => res.redirect(301, "https://pickleandpan.com/"));
+
 app.use(express.json({ limit: "200kb" }));
 app.use(upload.any());
 
